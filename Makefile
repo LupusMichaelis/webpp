@@ -1,4 +1,3 @@
-
 CXX=g++
 MKDIR=mkdir -p
 
@@ -19,6 +18,7 @@ LDFLAGS= \
 SRCDIR=src
 
 CPPFILES= \
+	  url.cpp \
 	  json_parser.cpp \
 	  json.cpp \
 	  mysql_var.cpp \
@@ -34,11 +34,14 @@ TARGET=webpp
 
 target: $(TARGET)
 
-tests: test_json test_mysql_var
+tests: test_json test_url test_mysql_var
 	./$<
 
 test_mysql_var: src/mysql_var.o tests/test_mysql_var.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
+
+test_url: src/url.o src/test_url.o
+	$(CXX) -o $@ $(OBJS) $(LDFLAGS)
 
 test_json: src/json_parser.o src/json.o tests/test_json.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
