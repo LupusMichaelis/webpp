@@ -9,11 +9,11 @@ LDFLAGS= \
 		-lboost_signals \
 		-lboost_system \
 		-lboost_filesystem \
+		-lboost_regex \
 		`mysql_config --libs` \
 		-g -ggdb
 
 SRCS= \
-	  story.cpp \
 	  model.cpp \
 	  webpp.cpp \
 
