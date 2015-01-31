@@ -21,6 +21,8 @@ model::~model()
 	mysql_close(mp_impl->p_mysql);
 }
 
+#include <cstdlib>
+
 void model::get_rows_by_criterias(row_list_type &rows, std::string const table_name, criteria_type const criterias)
 {
 	auto it_criteria = criterias.cbegin();
@@ -35,18 +37,50 @@ void model::get_rows_by_criterias(row_list_type &rows, std::string const table_n
 	if(0 == mysql_num_rows(result))
 		throw "Too much or too many results";
 
-	std::vector<std::string> field_list;
+	std::vector<std::pair<std::string, enum enum_field_types>> field_list;
 	while(MYSQL_FIELD * field = mysql_fetch_field(result))
-		field_list.push_back(field->name);
+		field_list.push_back({field->name, field->type});
 
 	while(MYSQL_ROW row = mysql_fetch_row(result))
 	{
 		row_type row_;
 
-		row_[field_list[0]] = row[0] ? row[0]: "";
-		row_[field_list[1]] = row[1] ? row[1]: "";
-		row_[field_list[2]] = row[2] ? row[2]: "";
-		row_[field_list[3]] = row[3] ? row[3]: "";
+		for(size_t row_idx = 0; row_idx < field_list.size(); ++row_idx)
+		{
+			std::string const & field_name {field_list[row_idx].first};
+			enum enum_field_types const & field_type {field_list[row_idx].second};
+
+			if(NULL == row[row_idx])
+				row_[field_name] = nullptr;
+			else
+				switch(field_type)
+				{
+					case MYSQL_TYPE_DECIMAL:
+					case MYSQL_TYPE_TINY:
+					case MYSQL_TYPE_SHORT:
+					case MYSQL_TYPE_LONG:
+					case MYSQL_TYPE_LONGLONG:
+					case MYSQL_TYPE_INT24:
+						row_[field_name] = std::atoi(row[row_idx]);
+						break;
+					case MYSQL_TYPE_NULL:
+						row_[field_name] = nullptr;
+						break;
+
+					// MYSQL_TYPE_FLOAT
+					// MYSQL_TYPE_DOUBLE
+					// MYSQL_TYPE_TIMESTAMP
+					// MYSQL_TYPE_DATE
+					// MYSQL_TYPE_TIME
+					// MYSQL_TYPE_DATETIME
+					// MYSQL_TYPE_YEAR
+					// MYSQL_TYPE_NEWDATE
+					// MYSQL_TYPE_VARCHAR
+					// MYSQL_TYPE_BIT
+					default:
+						row_[field_name] = std::string(row[row_idx]);
+				}
+		}
 
 		rows.push_back(row_);
 	}

@@ -43,7 +43,7 @@ std::map<std::string, std::string> const make_environment()
 
 #include "model.hpp"
 
-void print_all(std::ostream & out, std::vector<std::map<std::string, std::string>> rows)
+void print_all(std::ostream & out, model::row_list_type rows)
 {
 	out << "[ ";
 	for(auto row: rows)
@@ -55,7 +55,16 @@ void print_all(std::ostream & out, std::vector<std::map<std::string, std::string
 		{
 			if(!is_first || (is_first = false))
 				out << ", ";
-			out << boost::format("\"%s\": \"%s\"\n") % field.first % field.second;
+			if(nullptr == field.second)
+				out << boost::format("\"%s\": null\n") % field.first;
+			else if(field.second.is_integer())
+				out << boost::format("\"%s\": %s\n") % field.first % field.second.integer();
+			else if(field.second.is_boolean())
+				out << boost::format("\"%s\": %s\n")
+					% field.first
+					% (field.second.boolean() ? "true" : "false");
+			else
+				out << boost::format("\"%s\": \"%s\"\n") % field.first % field.second.string();
 		}
 		out << " }";
 	}
@@ -104,7 +113,7 @@ int main()
 	}
 
 	model m;
-	std::vector<std::map<std::string, std::string>> rows;
+	model::row_list_type rows;
 
 	if("GET" == method)
 	{

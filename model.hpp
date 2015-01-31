@@ -2,6 +2,7 @@
 #	define HPP_MODEL
 
 #	include "memory.hpp"
+#	include "mysql_var.hpp"
 
 #	include <map>
 #	include <string>
@@ -16,7 +17,7 @@ class model
 
 	public:
 		typedef std::map<std::string, std::string> criteria_type;
-		typedef std::map<std::string, std::string> row_type;
+		typedef std::map<std::string, mysql_var> row_type;
 		typedef std::vector<row_type> row_list_type;
 
 	public:
