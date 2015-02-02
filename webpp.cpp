@@ -41,9 +41,10 @@ std::map<std::string, std::string> const make_environment()
 	return environment;
 }
 
+#include "mysql_connection.hpp"
 #include "model.hpp"
 
-void print_all(std::ostream & out, model::row_list_type rows)
+void print_all(std::ostream & out, webpp::model::row_list_type rows)
 {
 	out << "[ ";
 	for(auto row: rows)
@@ -68,7 +69,7 @@ void print_all(std::ostream & out, model::row_list_type rows)
 		}
 		out << " }";
 	}
-	out << " ]";
+	out << " ]" << std::endl;
 
 	/*
 	std::cout << "<!DOCTYPE html>\n"
@@ -102,23 +103,27 @@ int main()
 	std::map<std::string, std::string> criterias;
 
 	boost::smatch results;
-	boost::regex const re { "(\\w+)=([^=]+)" };
+	boost::regex const re { "^([^=]+)=([^=]+)$" };
 	auto match_options = boost::match_perl;
 	if(boost::regex_match(criteria, results, re, match_options))
 	{
-		model::criteria_type::value_type criteria
+		webpp::model::criteria_type::value_type criteria
 			{ {results[1].first, results[1].second }
 			, { results[2].first, results[2].second } };
 		criterias.insert(criteria);
 	}
 
-	model m;
-	model::row_list_type rows;
+	webpp::model m;
+	std::unique_ptr<webpp::model::row_list_type> p_rows;
+
+	auto p_con = std::make_shared<webpp::mysql::connection>();
+	p_con->connect("localhost", "test", "test", "test", 3308);
+	m.connection(p_con);
 
 	if("GET" == method)
 	{
-		m.get_rows_by_criterias(rows, table_name, criterias);
-		print_all(std::cout, rows);
+		m.get_rows_by_criterias(p_rows, table_name, criterias);
+		print_all(std::cout, *p_rows);
 	}
 	else if("POST" == method)
 	{

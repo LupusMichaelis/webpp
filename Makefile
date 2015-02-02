@@ -14,6 +14,8 @@ LDFLAGS= \
 		-g -ggdb
 
 SRCS= \
+	  mysql_result.cpp \
+	  mysql_connection.cpp \
 	  mysql_var.cpp \
 	  model.cpp \
 	  webpp.cpp \
