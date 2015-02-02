@@ -44,7 +44,7 @@ std::map<std::string, std::string> const make_environment()
 #include "mysql_connection.hpp"
 #include "model.hpp"
 
-void print_all(std::ostream & out, webpp::model::row_list_type rows)
+void print_json(std::ostream & out, webpp::model::row_list_type rows)
 {
 	out << "[ ";
 	for(auto row: rows)
@@ -70,16 +70,24 @@ void print_all(std::ostream & out, webpp::model::row_list_type rows)
 		out << " }";
 	}
 	out << " ]" << std::endl;
+}
 
-	/*
+
+void print_html(std::ostream & out, webpp::model::row_list_type rows)
+{
 	std::cout << "<!DOCTYPE html>\n"
 		"<html>\n"
-		"\t<head>\n\t\t<title>" << title << "</title>\n\t</head>\n"
+		"\t<head>\n\t\t<title>" << "Some data" << "</title>\n\t</head>\n"
 		"\t<body>\n"
-		"\t\t" << content << "\n"
+		"\t\t";
+
+	std::cout << "\t\t\t<pre>\n";
+	print_json(out, rows);
+	std::cout << "\t\t\t</pre>\n";
+
+	std::cout << "\n"
 		"\t</body>\n"
 		"</html>\n";
-	*/
 }
 
 int main()
@@ -98,19 +106,24 @@ int main()
 	boost::split(segments, uri, boost::is_any_of("/"));
 
 	std::string table_name {segments[1]};
-	std::string criteria {segments[2]};
 
+	std::string criteria;
 	std::map<std::string, std::string> criterias;
 
-	boost::smatch results;
-	boost::regex const re { "^([^=]+)=([^=]+)$" };
-	auto match_options = boost::match_perl;
-	if(boost::regex_match(criteria, results, re, match_options))
+	if(segments.size() > 2)
 	{
-		webpp::model::criteria_type::value_type criteria
-			{ {results[1].first, results[1].second }
-			, { results[2].first, results[2].second } };
-		criterias.insert(criteria);
+		criteria = segments[2];
+
+		boost::smatch results;
+		boost::regex const re { "^([^=]+)=([^=]+)$" };
+		auto match_options = boost::match_perl;
+		if(boost::regex_match(criteria, results, re, match_options))
+		{
+			webpp::model::criteria_type::value_type criteria
+				{ {results[1].first, results[1].second }
+				, { results[2].first, results[2].second } };
+			criterias.insert(criteria);
+		}
 	}
 
 	webpp::model m;
@@ -123,7 +136,7 @@ int main()
 	if("GET" == method)
 	{
 		m.get_rows_by_criterias(p_rows, table_name, criterias);
-		print_all(std::cout, *p_rows);
+		print_json(std::cout, *p_rows);
 	}
 	else if("POST" == method)
 	{

@@ -6,6 +6,7 @@
 #include <cstdlib>
 
 #include <boost/format.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 namespace webpp {
 
@@ -33,10 +34,16 @@ void model::get_rows_by_criterias
 	, criteria_type const criterias
 	)
 {
-	auto it_criteria = criterias.cbegin();
-	auto query = (boost::format("select * from `%s` where `%s` = '%s'")
-		% table_name % it_criteria->first % it_criteria->second).str();
+	std::string query {(boost::format("select * from `%s`") % table_name).str()};
 
+	if(criterias.size())
+	{
+		std::vector<std::string> where;
+		for(auto criteria: criterias)
+			where.push_back((boost::format("`%s` = '%s'") % criteria.first % criteria.second).str());
+
+		query += " where " + boost::algorithm::join(where, " and ");
+	}
 
 	std::unique_ptr<mysql::result> p_result;
 	mp_impl->p_connection->query(p_result, query);
