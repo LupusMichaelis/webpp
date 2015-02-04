@@ -20,7 +20,7 @@ class var;
 
 class model
 {
-	class impl;
+	struct impl;
 	std::unique_ptr<impl> mp_impl;
 
 	public:
@@ -33,12 +33,16 @@ class model
 		model();
 		~model();
 
-		void connection(std::shared_ptr<mysql::connection> const & p_connection);
+		void connection(std::shared_ptr<mysql::connection> p_connection);
 
 		void get_rows_by_criterias(std::unique_ptr<row_list_type> & rows
-			, std::string const table_name
-			, criteria_type const criterias
+			, std::string table_name
+			, criteria_type criterias
 			);
+		bool update_rows(std::string table_name
+				, criteria_type set_criterias
+				, criteria_type where_criterias
+				);
 };
 
 } // webpp

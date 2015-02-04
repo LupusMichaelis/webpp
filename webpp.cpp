@@ -7,7 +7,7 @@
 #include <map>
 #include <sstream>
 #include <string>
-
+#include <type_traits>
 
 extern char ** environ;
 
@@ -75,19 +75,42 @@ void print_json(std::ostream & out, webpp::model::row_list_type rows)
 
 void print_html(std::ostream & out, webpp::model::row_list_type rows)
 {
-	std::cout << "<!DOCTYPE html>\n"
+	out << "<!DOCTYPE html>\n"
 		"<html>\n"
 		"\t<head>\n\t\t<title>" << "Some data" << "</title>\n\t</head>\n"
 		"\t<body>\n"
 		"\t\t";
 
-	std::cout << "\t\t\t<pre>\n";
+	out << "\t\t\t<pre>\n";
 	print_json(out, rows);
-	std::cout << "\t\t\t</pre>\n";
+	out << "\t\t\t</pre>\n";
 
-	std::cout << "\n"
+	out << "\n"
 		"\t</body>\n"
 		"</html>\n";
+}
+
+#include "json.hpp"
+
+void json_extract
+	( std::unique_ptr<std::map<std::string, std::string>> & p_changes
+	, std::istream & in
+	)
+{
+	auto p_out = std::make_unique<std::remove_reference<decltype(p_changes)>::type::element_type>();
+
+	webpp::json::parser json_parser;
+	std::unique_ptr<webpp::json::parser::root> p_tree;
+	json_parser.parse(p_tree, in);
+
+	for(auto property: dynamic_cast<webpp::json::parser::object &>(*p_tree->mp_node).m_properties)
+	{
+		auto value = dynamic_cast<webpp::json::parser::string &>(*property.second).m_value;
+
+		p_out->insert(std::make_pair(property.first, value));
+	}
+
+	std::swap(p_out, p_changes);
 }
 
 int main()
@@ -140,6 +163,16 @@ int main()
 	}
 	else if("POST" == method)
 	{
+		std::unique_ptr<std::map<std::string, std::string>> p_changes;
+		json_extract(p_changes, std::cin);
+
+		m.get_rows_by_criterias(p_rows, table_name, criterias);
+		for(auto row: *p_rows)
+		{
+
+		}
+
+		m.update_rows(table_name, *p_changes, criterias);
 	}
 	else if("PUT" == method)
 	{
