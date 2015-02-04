@@ -1,4 +1,6 @@
 
+CXX=g++
+
 CXXFLAGS=-Wall \
 		-Werror \
 		-std=c++11 \
@@ -14,6 +16,7 @@ LDFLAGS= \
 		-g -ggdb
 
 SRCS= \
+	  json.cpp \
 	  mysql_result.cpp \
 	  mysql_connection.cpp \
 	  mysql_var.cpp \
