@@ -9,7 +9,7 @@ class result;
 
 class connection
 {
-	class impl;
+	struct impl;
 	std::unique_ptr<impl> mp_impl;
 
 	public:
@@ -23,14 +23,14 @@ class connection
 		connection & operator=(connection const & copied) = delete;
 
 		void connect
-			( std::string const & host
-			, std::string username
-			, std::string password
-			, std::string space
-			, unsigned port
+			( std::string const host
+			, std::string const username
+			, std::string const password
+			, std::string const space
+			, unsigned const port
 			);
 
-	void query(std::unique_ptr<result> & p_result, std::string const & query);
+	void query(std::unique_ptr<result> & p_result, std::string const query);
 };
 
 } } // namespace webpp::mysql

@@ -13,7 +13,7 @@ namespace webpp { namespace mysql {
 
 class result
 {
-	class impl;
+	struct impl;
 	std::unique_ptr<impl> mp_impl;
 
 	public:
@@ -27,11 +27,14 @@ class result
 
 		operator bool() const;
 
-		void fields(field_list_type const & field_list);
+		void fields(field_list_type field_list);
 		void fields(std::unique_ptr<field_list_type> & p_field_list) const;
 
-		void rows(row_list_type const & row_list);
+		void rows(row_list_type row_list);
 		void rows(std::unique_ptr<row_list_type> & p_row_list) const;
+
+		void updated_rows(size_t update_rows);
+		size_t updated_rows() const;
 
 };
 
