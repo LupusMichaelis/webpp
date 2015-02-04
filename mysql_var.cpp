@@ -1,7 +1,9 @@
 
 #include "mysql_var.hpp"
+#include "memory.hpp"
 
 #include <string>
+#include <stdexcept>
 
 namespace webpp { namespace mysql {
 
@@ -86,8 +88,6 @@ var::operator bool() const
 		&& !(is_integer() && !mp_impl->integer)
 		;
 }
-
-#include <stdexcept>
 
 std::string const & var::string() const
 {

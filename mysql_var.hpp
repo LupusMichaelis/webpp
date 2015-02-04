@@ -7,7 +7,7 @@ namespace webpp { namespace mysql {
 
 class var
 {
-	class impl;
+	struct impl;
 	std::unique_ptr<impl> mp_impl;
 
 	public:
