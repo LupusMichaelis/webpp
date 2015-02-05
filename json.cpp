@@ -7,103 +7,9 @@
 
 namespace webpp { namespace json {
 
-struct parser::impl
+void skip_spaces(char & c, std::istream & in)
 {
-};
-
-parser::parser()
-	: mp_impl {std::make_unique<parser::impl>()}
-{
-}
-
-parser::~parser()
-{
-}
-
-parser::value::~value() { }
-parser::object::~object() { }
-parser::array::~array() { }
-parser::string::~string() { }
-parser::number::~number() { }
-parser::boolean::~boolean() { }
-parser::null::~null() { }
-parser::root::~root() { }
-
-void parser::parse(std::unique_ptr<root> & p_root, std::istream & in)
-{
-	auto p_out = std::make_unique<std::remove_reference<decltype(p_root)>::type::element_type>();
-	p_out->parse(0, in);
-	std::swap(p_root, p_out);
-}
-
-void parser::root::parse(char c, std::istream & in)
-{
-	std::unique_ptr<value> p_state;
-
-	if(0 == c)
-		in.get(c);
-
-	if('[' == c)
-	{
-		std::unique_ptr<value> p_array_state {std::make_unique<array>()};
-		std::swap(p_state, p_array_state);
-	}
-	else if('{' == c)
-	{
-		std::unique_ptr<value> p_object_state {std::make_unique<object>()};
-		std::swap(p_state, p_object_state);
-	}
-	else
-		throw "Malformed";
-
-	p_state->parse(c, in);
-	mp_node.reset(p_state.release());
-}
-
-void parser::value::parse(char c, std::istream & in)
-{
-	if(0 == c)
-		in.get(c);
-
-	while(std::isspace(c))
-		in.get(c);
-
-	if('{' == c)
-	{
-		std::unique_ptr<value> p_object_state {std::make_unique<object>()};
-		p_object_state->parse(c, in);
-	}
-	else if('"' == c)
-	{
-		std::unique_ptr<value> p_string_state {std::make_unique<string>()};
-		p_string_state->parse(c, in);
-	}
-	else if('[' == c)
-	{
-		std::unique_ptr<value> p_array_state {std::make_unique<array>()};
-		p_array_state->parse(c, in);
-	}
-	else if('-' == c or std::isdigit(c))
-	{
-		std::unique_ptr<value> p_digit_state {std::make_unique<number>()};
-		p_digit_state->parse(c, in);
-	}
-	else if('t' == c or 'f' == c)
-	{
-		std::unique_ptr<value> p_boolean_state {std::make_unique<boolean>()};
-		p_boolean_state->parse(c, in);
-	}
-	else if('n' == c)
-	{
-		std::unique_ptr<value> p_null_state {std::make_unique<null>()};
-		p_null_state->parse(c, in);
-	}
-	else
-		throw "Malformed";
-}
-
-void fast_forward_space(char & c, std::istream & in)
-{
+	if(0 == c or std::isspace(c))
 	do
 	{
 		in.get(c);
@@ -111,11 +17,85 @@ void fast_forward_space(char & c, std::istream & in)
 			break;
 
 	} while(!in.eof());
-
 }
 
-// XXX relooop properties
-void parser::object::parse(char c, std::istream & in)
+value::~value() { }
+object::~object() { }
+array::~array() { }
+string::~string() { }
+number::~number() { }
+boolean::~boolean() { }
+null::~null() { }
+
+void start(std::unique_ptr<value> & p_value, std::istream & in)
+{
+	std::unique_ptr<value> p;
+
+	char c = 0;
+	skip_spaces(c, in);
+
+	if('[' == c)
+	{
+		std::unique_ptr<value> p_array {std::make_unique<array>()};
+		std::swap(p, p_array);
+	}
+	else if('{' == c)
+	{
+		std::unique_ptr<value> p_object {std::make_unique<object>()};
+		std::swap(p, p_object);
+	}
+	else
+		throw "Malformed";
+
+	p->parse(c, in);
+	p_value.reset(p.release()); // XXX leak memory possible?
+}
+
+void parse(std::unique_ptr<value> & p_value, char c, std::istream & in)
+{
+	skip_spaces(c, in);
+
+	if('{' == c)
+	{
+		std::unique_ptr<value> p_object {std::make_unique<object>()};
+		p_object->parse(c, in);
+		std::swap(p_object, p_value);
+	}
+	else if('"' == c)
+	{
+		std::unique_ptr<value> p_string {std::make_unique<string>()};
+		p_string->parse(c, in);
+		std::swap(p_string, p_value);
+	}
+	else if('[' == c)
+	{
+		std::unique_ptr<value> p_array {std::make_unique<array>()};
+		p_array->parse(c, in);
+		std::swap(p_array, p_value);
+	}
+	else if('-' == c or std::isdigit(c))
+	{
+		std::unique_ptr<value> p_digit {std::make_unique<number>()};
+		p_digit->parse(c, in);
+		std::swap(p_digit, p_value);
+	}
+	else if('t' == c or 'f' == c)
+	{
+		std::unique_ptr<value> p_boolean {std::make_unique<boolean>()};
+		p_boolean->parse(c, in);
+		std::swap(p_boolean, p_value);
+	}
+	else if('n' == c)
+	{
+		std::unique_ptr<value> p_null {std::make_unique<null>()};
+		p_null->parse(c, in);
+		std::swap(p_null, p_value);
+	}
+	else
+		throw "Malformed";
+}
+
+void object::parse(char c, std::istream & in)
 {
 	if(0 == c)
 		in.get(c);
@@ -125,27 +105,33 @@ void parser::object::parse(char c, std::istream & in)
 
 	do
 	{
-		fast_forward_space(c, in);
+		in.get(c);
+		skip_spaces(c, in);
 
 		if('}' == c)
 			break;
 
-		auto p_string_state = std::make_unique<string>();
-		p_string_state->parse(c, in);
+		auto p_string = std::make_unique<string>();
+		p_string->parse(c, in);
 
-		fast_forward_space(c, in);
+		in.get(c);
+		skip_spaces(c, in);
 
 		if(':' != c)
 			throw "Malformed";
 
 		in.get(c);
+		skip_spaces(c, in);
 
-		std::shared_ptr<value> p_value_state {std::make_shared<string>()}; // XXX
-		p_value_state->parse(0, in);
+		{
+			std::unique_ptr<value> p_value;
 
-		m_properties.insert(std::make_pair(p_string_state->m_value, p_value_state));
+			webpp::json::parse(p_value, c, in);
+			m_properties.insert(std::make_pair(p_string->value(), std::move(p_value)));
+		}
 
-		fast_forward_space(c, in);
+		in.get(c);
+		skip_spaces(c, in);
 
 		if('}' == c)
 			break;
@@ -156,24 +142,25 @@ void parser::object::parse(char c, std::istream & in)
 	} while(!in.eof());
 }
 
-void parser::array::parse(char c, std::istream & in)
+void array::parse(char c, std::istream & in)
 {
-	std::unique_ptr<value> p_array_state {std::make_unique<array>()};
-	p_array_state->parse(0, in);
+	std::unique_ptr<value> p_array {std::make_unique<array>()};
+
+	throw "TODO";
 
 }
 
-void parser::number::parse(char c, std::istream & in)
+void number::parse(char c, std::istream & in)
 {
 	m_value += c;
 }
 
-void parser::boolean::parse(char c, std::istream & in)
+void boolean::parse(char c, std::istream & in)
 {
 	m_value = 't' == c;
 }
 
-void parser::string::parse(char c, std::istream & in)
+void string::parse(char c, std::istream & in)
 {
 	std::string value;
 	if(0 == c)
@@ -196,7 +183,7 @@ void parser::string::parse(char c, std::istream & in)
 	m_value = value;
 }
 
-void parser::null::parse(char c, std::istream & in)
+void null::parse(char c, std::istream & in)
 {
 	char ull[4];
 	in.get(ull, 3);

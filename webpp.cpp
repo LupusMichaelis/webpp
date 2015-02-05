@@ -15,6 +15,8 @@ std::map<std::string, std::string> const make_header()
 {
 	std::map<std::string, std::string> header;
 	//header["Content-type"] = "text/html";
+	header["Status"] = "200 OK";
+	//header["Status"] = "404 Not Found";
 	header["Content-type"] = "application/json";
 
 	return header;
@@ -99,13 +101,12 @@ void json_extract
 {
 	auto p_out = std::make_unique<std::remove_reference<decltype(p_changes)>::type::element_type>();
 
-	webpp::json::parser json_parser;
-	std::unique_ptr<webpp::json::parser::root> p_tree;
-	json_parser.parse(p_tree, in);
+	std::unique_ptr<webpp::json::value> p_tree;
+	webpp::json::start(p_tree, in);
 
-	for(auto property: dynamic_cast<webpp::json::parser::object &>(*p_tree->mp_node).m_properties)
+	for(auto property: dynamic_cast<webpp::json::object &>(*p_tree).properties())
 	{
-		auto value = dynamic_cast<webpp::json::parser::string &>(*property.second).m_value;
+		auto value = dynamic_cast<webpp::json::string &>(*property.second).value();
 
 		p_out->insert(std::make_pair(property.first, value));
 	}
