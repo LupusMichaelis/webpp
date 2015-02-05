@@ -1,5 +1,6 @@
 
 CXX=g++
+MKDIR=mkdir -p
 
 CXXFLAGS=-Wall \
 		-Werror \
@@ -15,23 +16,25 @@ LDFLAGS= \
 		`mysql_config --libs` \
 		-g -ggdb
 
+SRCDIR=src
+
 SRCS= \
 	  json.cpp \
 	  mysql_result.cpp \
 	  mysql_connection.cpp \
 	  mysql_var.cpp \
 	  model.cpp \
-	  webpp.cpp \
 
-
+CPPFILES=$(addprefix $(SRCDIR)/, $(SRCS))
 OBJS=$(SRCS:.cpp=.o)
 
+.PHONY: tests
 TARGET=webpp
 
 target: $(TARGET)
 
 webpp: $(OBJS)
-	$(CXX) -o $@ $(OBJS) $(LDFLAGS)
+	$(CXX) -o $@ $(addprefix $@, .o) $(OBJS) $(LDFLAGS)
 
 %.o: %.cpp
 	$(CXX) -c $< $(CXXFLAGS)
