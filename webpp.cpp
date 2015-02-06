@@ -43,8 +43,8 @@ std::map<std::string, std::string> const make_environment()
 	return environment;
 }
 
-#include "mysql_connection.hpp"
-#include "model.hpp"
+#include "src/mysql_connection.hpp"
+#include "src/model.hpp"
 
 void print_json(std::ostream & out, webpp::model::row_list_type rows)
 {
@@ -92,7 +92,7 @@ void print_html(std::ostream & out, webpp::model::row_list_type rows)
 		"</html>\n";
 }
 
-#include "json.hpp"
+#include "src/json.hpp"
 
 void json_extract
 	( std::unique_ptr<std::map<std::string, std::string>> & p_changes

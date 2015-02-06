@@ -18,26 +18,32 @@ LDFLAGS= \
 
 SRCDIR=src
 
-SRCS= \
+CPPFILES= \
 	  json.cpp \
 	  mysql_result.cpp \
 	  mysql_connection.cpp \
 	  mysql_var.cpp \
 	  model.cpp \
 
-CPPFILES=$(addprefix $(SRCDIR)/, $(SRCS))
+SRCS=$(addprefix $(SRCDIR)/, $(CPPFILES))
 OBJS=$(SRCS:.cpp=.o)
 
-.PHONY: tests
+.PHONY: target tests
 TARGET=webpp
 
 target: $(TARGET)
 
-webpp: $(OBJS)
-	$(CXX) -o $@ $(addprefix $@, .o) $(OBJS) $(LDFLAGS)
+tests: test_json
+	./$@
+
+test_json: src/json.o tests/test_json.o
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+$(TARGET): $(OBJS) $(addprefix $(TARGET), .o)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 %.o: %.cpp
-	$(CXX) -c $< $(CXXFLAGS)
+	$(CXX) -o $@ -c $< $(CXXFLAGS)
 
 clean:
 	-rm -rf $(OBJS) $(TARGET) $(TARGET:=.o)
