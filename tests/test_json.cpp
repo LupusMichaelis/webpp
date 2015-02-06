@@ -15,14 +15,14 @@ class json_print : public webpp::json::visitor
 
 		void print(webpp::json::value const & node) const
 		{
-			node.visit(*this);
+			node.accept(*this);
 		}
 
 		virtual void visit(webpp::json::array const & node) const
 		{
 			m_out << "Array\n";
 			for(auto const p_child: node.values())
-				p_child->visit(*this);
+				p_child->accept(*this);
 		}
 
 		virtual void visit(webpp::json::object const & node) const
@@ -31,7 +31,7 @@ class json_print : public webpp::json::visitor
 			for(auto const child: node.properties())
 			{
 				m_out << "[" << child.first << "] ";
-				child.second->visit(*this);
+				child.second->accept(*this);
 			}
 		}
 

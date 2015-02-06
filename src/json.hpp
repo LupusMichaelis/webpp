@@ -36,7 +36,7 @@ class value
 {
 	public:
 		virtual void parse(char c, std::istream & in) = 0;
-		virtual void visit(visitor const & v) const = 0;
+		virtual void accept(visitor const & v) const = 0;
 		virtual ~value();
 };
 
@@ -46,7 +46,7 @@ class object: public value
 
 	public:
 		virtual void parse(char c, std::istream & in);
-		virtual void visit(visitor const & v) const;
+		virtual void accept(visitor const & v) const;
 		virtual ~object();
 
 		std::map<std::string, std::shared_ptr<value>> const & properties() const { return m_properties; };
@@ -58,7 +58,7 @@ class array: public value
 
 	public:
 		virtual void parse(char c, std::istream & in);
-		virtual void visit(visitor const & v) const;
+		virtual void accept(visitor const & v) const;
 		virtual ~array();
 
 		std::vector<std::shared_ptr<value>> const & values() const { return m_values; };
@@ -70,7 +70,7 @@ class string: public value
 
 	public:
 		virtual void parse(char c, std::istream & in);
-		virtual void visit(visitor const & v) const;
+		virtual void accept(visitor const & v) const;
 		virtual ~string();
 
 		std::string const & value() const { return m_value; };
@@ -82,7 +82,7 @@ class number: public value
 
 	public:
 		virtual void parse(char c, std::istream & in);
-		virtual void visit(visitor const & v) const;
+		virtual void accept(visitor const & v) const;
 		virtual ~number();
 
 		std::string const & value() const { return m_value; };
@@ -94,7 +94,7 @@ class boolean: public value
 
 	public:
 		virtual void parse(char c, std::istream & in);
-		virtual void visit(visitor const & v) const;
+		virtual void accept(visitor const & v) const;
 		virtual ~boolean();
 
 		bool const value() const { return m_value;};
@@ -104,7 +104,7 @@ class null: public value
 {
 	public:
 		virtual void parse(char c, std::istream & in);
-		virtual void visit(visitor const & v) const;
+		virtual void accept(visitor const & v) const;
 		virtual ~null();
 };
 

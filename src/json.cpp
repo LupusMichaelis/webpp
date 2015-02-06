@@ -28,12 +28,12 @@ number::~number() { }
 boolean::~boolean() { }
 null::~null() { }
 
-void object::visit(visitor const & v) const		{ v.visit(*this); }
-void array::visit(visitor const & v) const		{ v.visit(*this); }
-void string::visit(visitor const & v) const		{ v.visit(*this); }
-void number::visit(visitor const & v) const		{ v.visit(*this); }
-void boolean::visit(visitor const & v) const	{ v.visit(*this); }
-void null::visit(visitor const & v) const		{ v.visit(*this); }
+void object::accept(visitor const & v) const	{ v.visit(*this); }
+void array::accept(visitor const & v) const		{ v.visit(*this); }
+void string::accept(visitor const & v) const	{ v.visit(*this); }
+void number::accept(visitor const & v) const	{ v.visit(*this); }
+void boolean::accept(visitor const & v) const	{ v.visit(*this); }
+void null::accept(visitor const & v) const		{ v.visit(*this); }
 
 void start(std::unique_ptr<value> & p_value, std::istream & in)
 {
