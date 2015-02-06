@@ -5,12 +5,13 @@
 
 class json_print : public webpp::json::visitor
 {
-	std::ostream & m_out;
+	std::ostream &	m_out;
+	mutable
+	size_t			m_depth;
 
 	public:
 
-		json_print();
-		explicit json_print(std::ostream & out) : m_out(out) { };
+		explicit json_print(std::ostream & out) : m_out(out), m_depth(0) { };
 		virtual ~json_print() { };
 
 		void print(webpp::json::value const & node) const
@@ -20,39 +21,60 @@ class json_print : public webpp::json::visitor
 
 		virtual void visit(webpp::json::array const & node) const
 		{
-			m_out << "Array\n";
+			bool first = true;
+			++m_depth;
+			m_out << "[ ";
 			for(auto const p_child: node.values())
+			{
+				if(first)
+					first = false;
+				else
+					m_out << "\n" << std::string(m_depth - 1, '\t') << ", ";
+
 				p_child->accept(*this);
+			}
+			m_out << "\n" << std::string(m_depth - 1, '\t') << "]";
+			--m_depth;
 		}
 
 		virtual void visit(webpp::json::object const & node) const
 		{
-			m_out << "Object\n";
+			bool first = true;
+			++m_depth;
+			m_out << "{ ";
 			for(auto const child: node.properties())
 			{
-				m_out << "[" << child.first << "] ";
+				if(first)
+					first = false;
+				else
+					m_out << "\n" << std::string(m_depth - 1, '\t') << ", ";
+
+				m_out << "\"" << child.first << "\": ";
 				child.second->accept(*this);
+
 			}
+			m_out << "\n" << std::string(m_depth - 1, '\t') << "}";
+			--m_depth;
 		}
 
 		virtual void visit(webpp::json::string const & node) const
 		{
-			m_out << "String\n";
+			m_out << "\"" << node.value() << "\"";
 		}
 
 		virtual void visit(webpp::json::number const & node) const
 		{
-			m_out << "Number\n";
+			m_out << "\"" << node.value() << "\"";
 		}
 
 		virtual void visit(webpp::json::null const & node) const
 		{
-			m_out << "null\n";
+			m_out << "null";
 		}
 
 		virtual void visit(webpp::json::boolean const & node) const
 		{
-			m_out << (node.value() ? "true" : "false") << "\n";
+			m_out << (node.value() ? "true" : "false");
 		}
 };
 
