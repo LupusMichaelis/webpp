@@ -19,17 +19,37 @@ class boolean;
 
 void start(std::unique_ptr<value> & p_tree, std::istream & in);
 void parse(std::unique_ptr<value> & p_value, char c, std::istream & in);
+void dump(std::ostream & out, webpp::json::value const & node);
 
 class visitor
 {
 	public:
 		virtual void visit(webpp::json::string const & node) const = 0;
-		virtual void visit(webpp::json::array const & node) const= 0;
+		virtual void visit(webpp::json::array const & node) const = 0;
 		virtual void visit(webpp::json::object const & node) const = 0;
 		virtual void visit(webpp::json::number const & node) const = 0;
 		virtual void visit(webpp::json::null const & node) const = 0;
 		virtual void visit(webpp::json::boolean const & node) const = 0;
 		virtual ~visitor();
+};
+
+class print : public visitor
+{
+	std::ostream &	m_out;
+	mutable
+	size_t			m_depth;
+
+	public:
+
+		explicit print(std::ostream & out) : m_out(out), m_depth(0) { };
+		virtual ~print() { };
+
+		virtual void visit(webpp::json::string const & node) const;
+		virtual void visit(webpp::json::array const & node) const;
+		virtual void visit(webpp::json::object const & node) const;
+		virtual void visit(webpp::json::number const & node) const;
+		virtual void visit(webpp::json::null const & node) const;
+		virtual void visit(webpp::json::boolean const & node) const;
 };
 
 class value

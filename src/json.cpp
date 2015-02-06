@@ -103,6 +103,12 @@ void parse(std::unique_ptr<value> & p_value, char c, std::istream & in)
 		throw "Malformed";
 }
 
+void dump(std::ostream & out, webpp::json::value const & node)
+{
+	print printer{out};
+	node.accept(printer);
+}
+
 void object::parse(char c, std::istream & in)
 {
 	if(0 == c)
@@ -248,6 +254,64 @@ void null::parse(char c, std::istream & in)
 
 	if(0 != strcmp("ull", ull))
 		throw "Malformed";
+}
+
+void print::visit(webpp::json::array const & node) const
+{
+	bool first = true;
+	++m_depth;
+	m_out << "[ ";
+	for(auto const p_child: node.values())
+	{
+		if(first)
+			first = false;
+		else
+			m_out << "\n" << std::string(m_depth - 1, '\t') << ", ";
+
+		p_child->accept(*this);
+	}
+	m_out << "\n" << std::string(m_depth - 1, '\t') << "]";
+	--m_depth;
+}
+
+void print::visit(webpp::json::object const & node) const
+{
+	bool first = true;
+	++m_depth;
+	m_out << "{ ";
+	for(auto const child: node.properties())
+	{
+		if(first)
+			first = false;
+		else
+			m_out << "\n" << std::string(m_depth - 1, '\t') << ", ";
+
+		m_out << "\"" << child.first << "\": ";
+		child.second->accept(*this);
+
+	}
+	m_out << "\n" << std::string(m_depth - 1, '\t') << "}";
+	--m_depth;
+}
+
+void print::visit(webpp::json::string const & node) const
+{
+	m_out << "\"" << node.value() << "\"";
+}
+
+void print::visit(webpp::json::number const & node) const
+{
+	m_out << "\"" << node.value() << "\"";
+}
+
+void print::visit(webpp::json::null const & node) const
+{
+	m_out << "null";
+}
+
+void print::visit(webpp::json::boolean const & node) const
+{
+	m_out << (node.value() ? "true" : "false");
 }
 
 } } // namespace webpp::json
