@@ -19,14 +19,14 @@ void skip_spaces(char & c, std::istream & in)
 	} while(!in.eof());
 }
 
-visitor::~visitor() { }
-value::~value() { }
-object::~object() { }
-array::~array() { }
-string::~string() { }
-number::~number() { }
-boolean::~boolean() { }
-null::~null() { }
+visitor::~visitor()	{ }
+value::~value()		{ }
+object::~object()	{ }
+array::~array()		{ }
+string::~string()	{ }
+number::~number()	{ }
+boolean::~boolean()	{ }
+null::~null()		{ }
 
 void object::accept(visitor const & v) const	{ v.visit(*this); }
 void array::accept(visitor const & v) const		{ v.visit(*this); }
@@ -256,62 +256,83 @@ void null::parse(char c, std::istream & in)
 		throw "Malformed";
 }
 
+struct print::impl
+{
+	explicit impl(std::ostream & out) : m_out(out), m_depth(0) { };
+	std::ostream &	m_out;
+	size_t			m_depth;
+};
+
+print::print(std::ostream & out)
+	: mp_impl {std::make_unique<impl>(out)}
+{
+}
+
+print::~print()
+{
+}
+
+inline std::string const indent(size_t level)
+{
+	return std::string(level - 1, '\t');
+}
+
 void print::visit(webpp::json::array const & node) const
 {
 	bool first = true;
-	++m_depth;
-	m_out << "[ ";
+	++mp_impl->m_depth;
+	mp_impl->m_out << "[ ";
 	for(auto const p_child: node.values())
 	{
 		if(first)
 			first = false;
 		else
-			m_out << "\n" << std::string(m_depth - 1, '\t') << ", ";
+			mp_impl->m_out << "\n" << indent(mp_impl->m_depth) << ", ";
 
 		p_child->accept(*this);
 	}
-	m_out << "\n" << std::string(m_depth - 1, '\t') << "]";
-	--m_depth;
+	mp_impl->m_out << "\n" << indent(mp_impl->m_depth) << "]";
+	--mp_impl->m_depth;
 }
 
 void print::visit(webpp::json::object const & node) const
 {
 	bool first = true;
-	++m_depth;
-	m_out << "{ ";
+	++mp_impl->m_depth;
+	mp_impl->m_out << "{ ";
 	for(auto const child: node.properties())
 	{
 		if(first)
 			first = false;
 		else
-			m_out << "\n" << std::string(m_depth - 1, '\t') << ", ";
+			mp_impl->m_out << "\n" << indent(mp_impl->m_depth) << ", ";
 
-		m_out << "\"" << child.first << "\": ";
+		mp_impl->m_out << "\"" << child.first << "\": ";
 		child.second->accept(*this);
 
 	}
-	m_out << "\n" << std::string(m_depth - 1, '\t') << "}";
-	--m_depth;
+	mp_impl->m_out << "\n" << indent(mp_impl->m_depth) << "}";
+	--mp_impl->m_depth;
 }
 
 void print::visit(webpp::json::string const & node) const
 {
-	m_out << "\"" << node.value() << "\"";
+	mp_impl->m_out << "\"" << node.value() << "\"";
 }
 
 void print::visit(webpp::json::number const & node) const
 {
-	m_out << "\"" << node.value() << "\"";
+	mp_impl->m_out << "\"" << node.value() << "\"";
 }
 
 void print::visit(webpp::json::null const & node) const
 {
-	m_out << "null";
+	mp_impl->m_out << "null";
 }
 
 void print::visit(webpp::json::boolean const & node) const
 {
-	m_out << (node.value() ? "true" : "false");
+	mp_impl->m_out << (node.value() ? "true" : "false");
 }
 
 } } // namespace webpp::json

@@ -35,14 +35,14 @@ class visitor
 
 class print : public visitor
 {
-	std::ostream &	m_out;
-	mutable
-	size_t			m_depth;
+	struct impl;
+	std::unique_ptr<impl> mp_impl;
 
 	public:
 
-		explicit print(std::ostream & out) : m_out(out), m_depth(0) { };
-		virtual ~print() { };
+		print() = delete;
+		explicit print(std::ostream & out);
+		virtual ~print();
 
 		virtual void visit(webpp::json::string const & node) const;
 		virtual void visit(webpp::json::array const & node) const;
