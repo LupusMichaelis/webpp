@@ -3,6 +3,7 @@
 #include "mysql_result.hpp"
 
 #include <mysql.h>
+#include <cstdlib>
 
 namespace webpp { namespace mysql {
 

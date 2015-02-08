@@ -3,8 +3,6 @@
 #include "mysql_connection.hpp"
 #include "mysql_result.hpp"
 
-#include <cstdlib>
-
 #include <boost/format.hpp>
 #include <boost/algorithm/string/join.hpp>
 
