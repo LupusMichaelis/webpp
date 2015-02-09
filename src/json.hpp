@@ -13,7 +13,8 @@
  * \todo line/position counting while parsing
  * \todo proper exceptions
  * \todo characters as constant?
- * \todo support to numbers
+ * \todo support well-formed strings
+ * \todo support date detection and formatting
  *
  */
 
@@ -79,6 +80,7 @@ class print : public visitor
 class value
 {
 	public:
+		virtual bool first_condition(char c) = 0;
 		virtual void parse(char & c, std::istream & in) = 0;
 		virtual void accept(visitor const & v) const = 0;
 		virtual ~value();
@@ -89,6 +91,7 @@ class object: public value
 	std::map<std::string, std::shared_ptr<value>> m_properties;
 
 	public:
+		virtual bool first_condition(char c);
 		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~object();
@@ -109,6 +112,7 @@ class array: public value
 	std::vector<std::shared_ptr<value>> m_values;
 
 	public:
+		virtual bool first_condition(char c);
 		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~array();
@@ -134,6 +138,7 @@ class string: public value
 	std::string m_value;
 
 	public:
+		virtual bool first_condition(char c);
 		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~string();
@@ -147,6 +152,7 @@ class number: public value
 	std::string m_value;
 
 	public:
+		virtual bool first_condition(char c);
 		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~number();
@@ -161,6 +167,7 @@ class boolean: public value
 	bool m_value;
 
 	public:
+		virtual bool first_condition(char c);
 		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~boolean();
@@ -172,6 +179,7 @@ class boolean: public value
 class null: public value
 {
 	public:
+		virtual bool first_condition(char c);
 		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~null();

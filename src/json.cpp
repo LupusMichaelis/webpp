@@ -162,9 +162,14 @@ void build(std::unique_ptr<number> & p_node, std::string const value)
 	std::swap(p_new, p_node);
 }
 
+bool object::first_condition(char c)
+{
+	return '{' == c;
+}
+
 void object::parse(char & c, std::istream & in)
 {
-	if('{' != c)
+	if(!first_condition(c))
 		throw "Malformed";
 
 	do
@@ -256,9 +261,14 @@ void add_property(object & self, std::string const key, std::nullptr_t const )
 	add_property(self, key, p_node);
 }
 
+bool array::first_condition(char c)
+{
+	return '[' == c;
+}
+
 void array::parse(char & c, std::istream & in)
 {
-	if('[' != c)
+	if(!first_condition(c))
 		throw "Malformed";
 
 	do
@@ -344,11 +354,16 @@ void add(array & self, size_t index, int const number_value)
 	self.add(index, p_value);
 }
 
+bool number::first_condition(char c)
+{
+	return ('0' != c and isdigit(c)) or '-' == c;
+}
+
 void number::parse(char & c, std::istream & in)
 {
 	std::string value;
 
-	if(!('0' != c and isdigit(c)) and '-' != c)
+	if(!first_condition(c))
 		throw "Malformed";
 
 	bool has_sign = false;
@@ -426,8 +441,16 @@ void number::parse(char & c, std::istream & in)
 	m_value = value;
 }
 
+bool boolean::first_condition(char c)
+{
+	return 't' == c or 'f' == c;
+}
+
 void boolean::parse(char & c, std::istream & in)
 {
+	if(!first_condition(c))
+		throw "Malformed";
+
 	if('t' == c)
 	{
 		char rue[4] = "\0\0\0";
@@ -454,11 +477,16 @@ void boolean::parse(char & c, std::istream & in)
 	skip_dirt(c, in);
 }
 
+bool string::first_condition(char c)
+{
+	return '"' == c;
+}
+
 void string::parse(char & c, std::istream & in)
 {
 	std::string value;
 
-	if('"' != c)
+	if(!first_condition(c))
 		throw "Malformed";
 
 	do
@@ -478,8 +506,16 @@ void string::parse(char & c, std::istream & in)
 	m_value = value;
 }
 
+bool null::first_condition(char c)
+{
+	return 'n' == c;
+}
+
 void null::parse(char & c, std::istream & in)
 {
+	if(!first_condition(c))
+		throw "Malformed";
+
 	char ull[4] = "\0\0\0";
 	in.get(ull, 4);
 
