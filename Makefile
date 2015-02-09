@@ -34,7 +34,7 @@ TARGET=webpp
 target: $(TARGET)
 
 tests: test_json
-	./$@
+	./$<
 
 test_json: src/json.o tests/test_json.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
