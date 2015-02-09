@@ -8,20 +8,24 @@
 
 int main(int argc, char * argv[])
 {
-	std::vector<std::string> strings { "{}"
+	std::vector<std::string> wellformed { "{}"
 		, "[]"
 		, "[[]]"
 		, "{ \"array\": [1, \"rho\", 3, null, true, false, { \"boom\": 5, \"bam\": 2}] }"
 		, "[null]"
 		, "{\"null\":null}"
 		, "[1,[]]"
+		, "[1.2]"
+		, "[-1.2]"
+		, "[-1.2e23]"
+		, "[1.2e23]"
+		, "[1.2e+23]"
+		, "[1.2e-23]"
 	};
 
-	for(auto s: strings)
+	for(auto s: wellformed)
 	{
 		std::cout << "===========================\n";
-		std::cout << (boost::format("%s:%d\n") % __FILE__ % __LINE__).str();
-		std::cout << "---------------------------\n";
 		std::cout << s;
 		std::cout << "\n---------------------------\n";
 
@@ -30,6 +34,40 @@ int main(int argc, char * argv[])
 		webpp::json::parse(p_tree, in);
 		std::cout << "---------------------------\n";
 		webpp::json::dump(std::cout, *p_tree);
+
+		std::cout << "\n---------------------------\n";
+		std::cout << "===========================" << std::endl;
+	}
+
+	std::vector<std::string> badformed { "{{}"
+		, "["
+		, "[[]"
+		, "{ \"array\" [] }"
+		, "[,]"
+		, "null"
+		, "[+1]"
+		, "[+1.2]"
+		, "[--1.2e23]", "[-+1.2e23]", "[1.2e--23]", "[1.2e+-23]", "[1.2e-+23]", "[1.2e++23]", "[1.2e+23-]"
+	};
+
+	for(auto s: badformed)
+	{
+		std::cout << "===========================\n";
+		std::cout << s;
+		std::cout << "\n---------------------------\n";
+
+		std::stringstream in {s};
+		std::unique_ptr<webpp::json::value> p_tree;
+		std::cout << "---------------------------\n";
+		try
+		{
+			webpp::json::parse(p_tree, in);
+			assert(false);
+		}
+		catch(char const * p_e)
+		{
+			std::cout << "Caught";
+		}
 
 		std::cout << "\n---------------------------\n";
 		std::cout << "===========================" << std::endl;

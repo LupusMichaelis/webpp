@@ -109,7 +109,7 @@ void parse(std::unique_ptr<value> & p_value, char & c, std::istream & in)
 		p_null->parse(c, in);
 		std::swap(p_null, p_value);
 	}
-	else if(isdigit(c))
+	else if('0' == c or !isdigit(c) or '-' == c)
 	{
 		std::unique_ptr<value> p_number {std::make_unique<number>()};
 		p_number->parse(c, in);
@@ -348,13 +348,75 @@ void number::parse(char & c, std::istream & in)
 {
 	std::string value;
 
-	if(!isdigit(c))
+	if(!('0' != c and isdigit(c)) and '-' != c)
 		throw "Malformed";
+
+	bool has_sign = false;
+	bool has_decimal = false;
+	bool has_exponent = false;
+	bool has_sign_exponent = false;
+	bool has_decimal_exponent = false;
+
+	if('-' == c)
+		has_sign = true;
 
 	do
 	{
 		value += c;
 		skip(c, in);
+
+		if('+' == c or '-' == c)
+		{
+			if(has_exponent)
+			{
+				if(has_sign_exponent)
+					throw "Malformed";
+				else
+				{
+					has_sign_exponent = true;
+					continue;
+				}
+			}
+		}
+
+		if('+' == c)
+		{
+			if(has_sign)
+				throw "Malformed";
+			else
+			{
+				has_sign = true;
+				continue;
+			}
+		}
+
+		if('.' == c)
+		{
+			if(has_decimal)
+				if(has_exponent)
+					if(has_decimal_exponent)
+						throw "Malformed";
+					else
+						has_decimal_exponent = true;
+				else
+					throw "Malformed";
+			else
+			{
+				has_decimal = true;
+				continue;
+			}
+		}
+
+		if('e' == c or 'E' == c)
+		{
+			if(has_exponent)
+				throw "Malformed";
+			else
+			{
+				has_exponent = true;
+				continue;
+			}
+		}
 
 		if(!isdigit(c))
 			break;
