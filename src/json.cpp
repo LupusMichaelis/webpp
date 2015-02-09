@@ -7,16 +7,24 @@
 
 namespace webpp { namespace json {
 
+void skip(char & c, std::istream & in)
+{
+	if(in.eof())
+		throw "Unexpected EOS";
+
+	in.get(c);
+}
+
+void skip_dirt(char & c, std::istream & in)
+{
+	if(!std::isspace(c))
+		skip(c, in);
+}
+
 void skip_spaces(char & c, std::istream & in)
 {
-	if(0 == c or std::isspace(c))
-	do
-	{
-		in.get(c);
-		if(!std::isspace(c))
-			break;
-
-	} while(!in.eof());
+	while(std::isspace(c))
+		skip(c, in);
 }
 
 visitor::~visitor()	{ }
@@ -35,11 +43,12 @@ void number::accept(visitor const & v) const	{ v.visit(*this); }
 void boolean::accept(visitor const & v) const	{ v.visit(*this); }
 void null::accept(visitor const & v) const		{ v.visit(*this); }
 
-void start(std::unique_ptr<value> & p_value, std::istream & in)
+void parse(std::unique_ptr<value> & p_value, std::istream & in)
 {
 	std::unique_ptr<value> p;
 
-	char c = 0;
+	char c;
+	skip(c, in);
 	skip_spaces(c, in);
 
 	if('[' == c)
@@ -59,7 +68,7 @@ void start(std::unique_ptr<value> & p_value, std::istream & in)
 	p_value.reset(p.release()); // XXX leak memory possible?
 }
 
-void parse(std::unique_ptr<value> & p_value, char c, std::istream & in)
+void parse(std::unique_ptr<value> & p_value, char & c, std::istream & in)
 {
 	skip_spaces(c, in);
 
@@ -71,9 +80,10 @@ void parse(std::unique_ptr<value> & p_value, char c, std::istream & in)
 	}
 	else if('"' == c)
 	{
-		std::unique_ptr<value> p_string {std::make_unique<string>()};
+		std::unique_ptr<string> p_string;
+		build(p_string);
 		p_string->parse(c, in);
-		std::swap(p_string, p_value);
+		p_value = std::move(p_string);
 	}
 	else if('[' == c)
 	{
@@ -99,6 +109,12 @@ void parse(std::unique_ptr<value> & p_value, char c, std::istream & in)
 		p_null->parse(c, in);
 		std::swap(p_null, p_value);
 	}
+	else if(isdigit(c))
+	{
+		std::unique_ptr<value> p_number {std::make_unique<number>()};
+		p_number->parse(c, in);
+		std::swap(p_number, p_value);
+	}
 	else
 		throw "Malformed";
 }
@@ -109,46 +125,84 @@ void dump(std::ostream & out, webpp::json::value const & node)
 	node.accept(printer);
 }
 
-void object::parse(char c, std::istream & in)
+template <typename value_type>
+void build(std::unique_ptr<value_type> & p_node)
 {
-	if(0 == c)
-		in.get(c);
+	p_node = std::move(std::make_unique<value_type>());
+}
 
+template void build<string>(std::unique_ptr<string> & p_node);
+template void build<array>(std::unique_ptr<array> & p_node);
+template void build<object>(std::unique_ptr<object> & p_node);
+template void build<number>(std::unique_ptr<number> & p_node);
+template void build<null>(std::unique_ptr<null> & p_node);
+template void build<boolean>(std::unique_ptr<boolean> & p_node);
+
+void build(std::unique_ptr<string> & p_node, std::string const value)
+{
+	std::remove_reference<decltype(p_node)>::type p_new;
+	build(p_new);
+	p_new->set(value);
+	std::swap(p_new, p_node);
+}
+
+void build(std::unique_ptr<boolean> & p_node, bool const value)
+{
+	std::remove_reference<decltype(p_node)>::type p_new;
+	build(p_new);
+	p_new->set(value);
+	std::swap(p_new, p_node);
+}
+
+void build(std::unique_ptr<number> & p_node, std::string const value)
+{
+	std::remove_reference<decltype(p_node)>::type p_new;
+	build(p_new);
+	p_new->set(value);
+	std::swap(p_new, p_node);
+}
+
+void object::parse(char & c, std::istream & in)
+{
 	if('{' != c)
 		throw "Malformed";
 
 	do
 	{
-		in.get(c);
+		skip_dirt(c, in);
 		skip_spaces(c, in);
 
 		if('}' == c)
+		{
+			skip(c, in);
 			break;
+		}
 
 		auto p_string = std::make_unique<string>();
 		p_string->parse(c, in);
 
-		in.get(c);
 		skip_spaces(c, in);
 
 		if(':' != c)
 			throw "Malformed";
 
-		in.get(c);
+		skip(c, in);
 		skip_spaces(c, in);
 
 		{
 			std::unique_ptr<value> p_value;
 
 			webpp::json::parse(p_value, c, in);
-			m_properties.insert(std::make_pair(p_string->value(), std::move(p_value)));
+			add_property(p_string->value(), p_value);
 		}
 
-		in.get(c);
 		skip_spaces(c, in);
 
 		if('}' == c)
+		{
+			skip(c, in);
 			break;
+		}
 
 		if(',' != c)
 			throw "Malformed";
@@ -156,23 +210,67 @@ void object::parse(char c, std::istream & in)
 	} while(!in.eof());
 }
 
-void array::parse(char c, std::istream & in)
+void object::add_property(std::string const key, std::unique_ptr<value> & p_node)
 {
-	std::unique_ptr<value> p_array {std::make_unique<array>()};
+	m_properties.insert(std::make_pair(key, std::move(p_node)));
+}
 
-	if(0 == c)
-		in.get(c);
+void add_property(object & self, std::string const key, std::unique_ptr<value> & p_node)
+{
+	self.add_property(key, p_node);
+}
 
+void add_property(object & self, std::string const key, std::unique_ptr<object> & p_object)
+{
+	std::unique_ptr<value> p_node {std::move(p_object)};
+	self.add_property(key, p_node);
+}
+
+void add_property(object & self, std::string const key, std::unique_ptr<array> & p_array)
+{
+	std::unique_ptr<value> p_node {std::move(p_array)};
+	self.add_property(key, p_node);
+}
+
+void add_property(object & self, std::string const key, bool const node_value)
+{
+	std::unique_ptr<json::boolean> p_leaf;
+	build(p_leaf, node_value);
+	std::unique_ptr<value> p_node {std::move(p_leaf)};
+	add_property(self, key, p_node);
+}
+
+void add_property(object & self, std::string const key, std::string const node_value)
+{
+	std::unique_ptr<string> p_leaf;
+	build(p_leaf, node_value);
+	std::unique_ptr<value> p_node {std::move(p_leaf)};
+	add_property(self, key, p_node);
+}
+
+void add_property(object & self, std::string const key, std::nullptr_t const )
+{
+	std::unique_ptr<null> p_leaf;
+	build(p_leaf);
+	std::unique_ptr<value> p_node {std::move(p_leaf)};
+	add_property(self, key, p_node);
+}
+
+void array::parse(char & c, std::istream & in)
+{
 	if('[' != c)
 		throw "Malformed";
 
 	do
 	{
-		in.get(c);
+		skip_dirt(c, in);
 		skip_spaces(c, in);
 
 		if(']' == c)
+		{
+			skip(c, in);
 			break;
+		}
 
 		{
 			std::unique_ptr<value> p_value;
@@ -181,11 +279,13 @@ void array::parse(char c, std::istream & in)
 			m_values.push_back(std::move(p_value));
 		}
 
-		in.get(c);
 		skip_spaces(c, in);
 
 		if(']' == c)
+		{
+			skip(c, in);
 			break;
+		}
 
 		if(',' != c)
 			throw "Malformed";
@@ -193,19 +293,85 @@ void array::parse(char c, std::istream & in)
 	} while(!in.eof());
 }
 
-void number::parse(char c, std::istream & in)
+void array::add(std::unique_ptr<value> & p_node)
 {
-	m_value += c;
+	m_values.push_back(std::move(p_node));
 }
 
-void boolean::parse(char c, std::istream & in)
+void array::add(size_t index, std::unique_ptr<value> & p_node)
+{
+	std::shared_ptr<null> p_null {std::make_shared<null>()};
+	if(index >= m_values.size())
+		std::fill_n(std::back_inserter(m_values), 1 + index - m_values.size(), p_null);
+	m_values[index] = std::move(p_node);
+}
+
+void add(array & self, std::unique_ptr<value> & p_node)
+{
+	self.add(p_node);
+}
+
+void add(array & self, size_t index, std::unique_ptr<value> & p_node)
+{
+	self.add(index, p_node);
+}
+
+/*
+void add(array & self, std::unique_ptr<object> & p_object);
+void add(array & self, std::unique_ptr<array> & p_array);
+void add(array & self, bool const value);
+void add(array & self, std::string const value);
+void add(array & self, std::nullptr_t const );
+*/
+
+void add(array & self, array const array_value)
+{
+	std::unique_ptr<value> p_array {std::make_unique<array>(array_value)};
+	self.add(p_array);
+}
+
+void add(array & self, size_t index, array const array_value)
+{
+	std::unique_ptr<value> p_array {std::make_unique<array>(array_value)};
+	self.add(index, p_array);
+}
+
+void add(array & self, size_t index, int const number_value)
+{
+	auto p_number = std::make_unique<number>();
+	p_number->set(number_value);
+	std::unique_ptr<value> p_value {std::move(p_number)};
+	self.add(index, p_value);
+}
+
+void number::parse(char & c, std::istream & in)
+{
+	std::string value;
+
+	if(!isdigit(c))
+		throw "Malformed";
+
+	do
+	{
+		value += c;
+		skip(c, in);
+
+		if(!isdigit(c))
+			break;
+
+	} while(!in.eof());
+
+	m_value = value;
+}
+
+void boolean::parse(char & c, std::istream & in)
 {
 	if('t' == c)
 	{
 		char rue[4] = "\0\0\0";
 		in.get(rue, 4);
 
-		if(0 != strcmp("rue", rue))
+		if(0 != std::strcmp("rue", rue))
 			throw "Malformed";
 
 		m_value = true;
@@ -215,30 +381,33 @@ void boolean::parse(char c, std::istream & in)
 		char alse[5] = "\0\0\0\0";
 		in.get(alse, 5);
 
-		if(0 != strcmp("alse", alse))
+		if(0 != std::strcmp("alse", alse))
 			throw "Malformed";
 
 		m_value = false;
 	}
 	else
 		throw "Malformed";
+
+	skip_dirt(c, in);
 }
 
-void string::parse(char c, std::istream & in)
+void string::parse(char & c, std::istream & in)
 {
 	std::string value;
-	if(0 == c)
-		in.get(c);
 
 	if('"' != c)
 		throw "Malformed";
 
 	do
 	{
-		in.get(c);
+		skip(c, in);
 
 		if('"' == c)
+		{
+			skip(c, in);
 			break;
+		}
 
 		value += c;
 
@@ -247,13 +416,15 @@ void string::parse(char c, std::istream & in)
 	m_value = value;
 }
 
-void null::parse(char c, std::istream & in)
+void null::parse(char & c, std::istream & in)
 {
 	char ull[4] = "\0\0\0";
 	in.get(ull, 4);
 
 	if(0 != strcmp("ull", ull))
 		throw "Malformed";
+
+	skip_dirt(c, in);
 }
 
 struct print::impl
@@ -322,7 +493,7 @@ void print::visit(webpp::json::string const & node) const
 
 void print::visit(webpp::json::number const & node) const
 {
-	mp_impl->m_out << "\"" << node.value() << "\"";
+	mp_impl->m_out << node.value();
 }
 
 void print::visit(webpp::json::null const & node) const

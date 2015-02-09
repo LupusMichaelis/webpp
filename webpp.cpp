@@ -102,7 +102,7 @@ void json_extract
 	auto p_out = std::make_unique<std::remove_reference<decltype(p_changes)>::type::element_type>();
 
 	std::unique_ptr<webpp::json::value> p_tree;
-	webpp::json::start(p_tree, in);
+	webpp::json::parse(p_tree, in);
 
 	for(auto property: dynamic_cast<webpp::json::object &>(*p_tree).properties())
 	{

@@ -6,6 +6,16 @@
 #	include <vector>
 #	include <map>
 #	include <string>
+#	include <boost/format.hpp>
+
+
+/**
+ * \todo line/position counting while parsing
+ * \todo proper exceptions
+ * \todo characters as constant?
+ * \todo support to numbers
+ *
+ */
 
 namespace webpp { namespace json {
 
@@ -17,9 +27,23 @@ class number;
 class null;
 class boolean;
 
-void start(std::unique_ptr<value> & p_tree, std::istream & in);
-void parse(std::unique_ptr<value> & p_value, char c, std::istream & in);
+void parse(std::unique_ptr<value> & p_tree, std::istream & in);
+void parse(std::unique_ptr<value> & p_value, char & c, std::istream & in);
 void dump(std::ostream & out, webpp::json::value const & node);
+
+template <typename value_type>
+void build(std::unique_ptr<value_type> & p_node);
+
+extern template void build<string>(std::unique_ptr<string> & p_node);
+extern template void build<array>(std::unique_ptr<array> & p_node);
+extern template void build<object>(std::unique_ptr<object> & p_node);
+extern template void build<number>(std::unique_ptr<number> & p_node);
+extern template void build<null>(std::unique_ptr<null> & p_node);
+extern template void build<boolean>(std::unique_ptr<boolean> & p_node);
+
+void build(std::unique_ptr<string> & p_node, std::string const value);
+void build(std::unique_ptr<boolean> & p_node, bool const value);
+void build(std::unique_ptr<number> & p_node, std::string const value);
 
 class visitor
 {
@@ -55,7 +79,7 @@ class print : public visitor
 class value
 {
 	public:
-		virtual void parse(char c, std::istream & in) = 0;
+		virtual void parse(char & c, std::istream & in) = 0;
 		virtual void accept(visitor const & v) const = 0;
 		virtual ~value();
 };
@@ -65,35 +89,57 @@ class object: public value
 	std::map<std::string, std::shared_ptr<value>> m_properties;
 
 	public:
-		virtual void parse(char c, std::istream & in);
+		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~object();
 
 		std::map<std::string, std::shared_ptr<value>> const & properties() const { return m_properties; };
+		void add_property(std::string const key, std::unique_ptr<value> & node);
 };
+
+void add_property(object & self, std::string const key, std::unique_ptr<value> & p_node);
+void add_property(object & self, std::string const key, std::unique_ptr<object> & p_object);
+void add_property(object & self, std::string const key, std::unique_ptr<array> & p_array);
+void add_property(object & self, std::string const key, bool const value);
+void add_property(object & self, std::string const key, std::string const value);
+void add_property(object & self, std::string const key, std::nullptr_t const );
 
 class array: public value
 {
 	std::vector<std::shared_ptr<value>> m_values;
 
 	public:
-		virtual void parse(char c, std::istream & in);
+		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~array();
 
 		std::vector<std::shared_ptr<value>> const & values() const { return m_values; };
+		void add(std::unique_ptr<value> & p_node);
+		void add(size_t index, std::unique_ptr<value> & p_node);
 };
+
+void add(array & self, std::unique_ptr<value> & p_node);
+void add(array & self, std::unique_ptr<object> & p_object);
+void add(array & self, std::unique_ptr<array> & p_array);
+void add(array & self, bool const value);
+void add(array & self, std::string const value);
+void add(array & self, std::string const key, std::nullptr_t const );
+
+void add(array & self, size_t index, int const number_value);
+void add(array & self, size_t index, array const array_value);
+void add(array & self, std::string const key, array const array_value);
 
 class string: public value
 {
 	std::string m_value;
 
 	public:
-		virtual void parse(char c, std::istream & in);
+		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~string();
 
-		std::string const & value() const { return m_value; };
+		std::string const & value() const	{ return m_value; };
+		void set(std::string new_value)	{ m_value = new_value; };
 };
 
 class number: public value
@@ -101,11 +147,13 @@ class number: public value
 	std::string m_value;
 
 	public:
-		virtual void parse(char c, std::istream & in);
+		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~number();
 
 		std::string const & value() const { return m_value; };
+		void set(std::string const new_value)	{ m_value = new_value; };
+		void set(int const new_value)	{ m_value = (boost::format("%d") % new_value).str(); };
 };
 
 class boolean: public value
@@ -113,17 +161,18 @@ class boolean: public value
 	bool m_value;
 
 	public:
-		virtual void parse(char c, std::istream & in);
+		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~boolean();
 
-		bool const value() const { return m_value;};
+		bool const value() const	{ return m_value;};
+		void set(bool new_value)	{ m_value = new_value; };
 };
 
 class null: public value
 {
 	public:
-		virtual void parse(char c, std::istream & in);
+		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
 		virtual ~null();
 };
