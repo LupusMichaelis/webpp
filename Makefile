@@ -19,6 +19,7 @@ LDFLAGS= \
 SRCDIR=src
 
 CPPFILES= \
+	  json_parser.cpp \
 	  json.cpp \
 	  mysql_result.cpp \
 	  mysql_connection.cpp \
@@ -36,7 +37,7 @@ target: $(TARGET)
 tests: test_json
 	./$<
 
-test_json: src/json.o tests/test_json.o
+test_json: src/json_parser.o src/json.o tests/test_json.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(TARGET): $(OBJS) $(addprefix $(TARGET), .o)

@@ -28,8 +28,6 @@ class number;
 class null;
 class boolean;
 
-void parse(std::unique_ptr<value> & p_tree, std::istream & in);
-void parse(std::unique_ptr<value> & p_value, char & c, std::istream & in);
 void dump(std::ostream & out, webpp::json::value const & node);
 
 template <typename value_type>
@@ -80,9 +78,8 @@ class print : public visitor
 class value
 {
 	public:
-		virtual bool first_condition(char c) = 0;
-		virtual void parse(char & c, std::istream & in) = 0;
 		virtual void accept(visitor const & v) const = 0;
+		virtual void clone(std::unique_ptr<value> & p_v) const = 0;
 		virtual ~value();
 };
 
@@ -91,9 +88,11 @@ class object: public value
 	std::map<std::string, std::shared_ptr<value>> m_properties;
 
 	public:
-		virtual bool first_condition(char c);
-		virtual void parse(char & c, std::istream & in);
+		object() = default;
+		object(object const &);
+
 		virtual void accept(visitor const & v) const;
+		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~object();
 
 		std::map<std::string, std::shared_ptr<value>> const & properties() const { return m_properties; };
@@ -112,9 +111,11 @@ class array: public value
 	std::vector<std::shared_ptr<value>> m_values;
 
 	public:
-		virtual bool first_condition(char c);
-		virtual void parse(char & c, std::istream & in);
+		array() = default;
+		array(array const &);
+
 		virtual void accept(visitor const & v) const;
+		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~array();
 
 		std::vector<std::shared_ptr<value>> const & values() const { return m_values; };
@@ -133,17 +134,18 @@ void add(array & self, size_t index, int const number_value);
 void add(array & self, size_t index, array const array_value);
 void add(array & self, std::string const key, array const array_value);
 
+class parser;
+
 class string: public value
 {
 	std::string m_value;
 
 	public:
-		virtual bool first_condition(char c);
-		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
+		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~string();
 
-		std::string const & value() const	{ return m_value; };
+		std::string const & get() const	{ return m_value; };
 		void set(std::string new_value)	{ m_value = new_value; };
 };
 
@@ -152,12 +154,11 @@ class number: public value
 	std::string m_value;
 
 	public:
-		virtual bool first_condition(char c);
-		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
+		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~number();
 
-		std::string const & value() const { return m_value; };
+		std::string const & get() const { return m_value; };
 		void set(std::string const new_value)	{ m_value = new_value; };
 		void set(int const new_value)	{ m_value = (boost::format("%d") % new_value).str(); };
 };
@@ -167,21 +168,19 @@ class boolean: public value
 	bool m_value;
 
 	public:
-		virtual bool first_condition(char c);
-		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
+		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~boolean();
 
-		bool const value() const	{ return m_value;};
+		bool const get() const	{ return m_value;};
 		void set(bool new_value)	{ m_value = new_value; };
 };
 
 class null: public value
 {
 	public:
-		virtual bool first_condition(char c);
-		virtual void parse(char & c, std::istream & in);
 		virtual void accept(visitor const & v) const;
+		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~null();
 };
 
