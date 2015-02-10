@@ -93,6 +93,7 @@ void print_html(std::ostream & out, webpp::model::row_list_type rows)
 }
 
 #include "src/json.hpp"
+#include "src/json_parser.hpp"
 
 void json_extract
 	( std::unique_ptr<std::map<std::string, std::string>> & p_changes
@@ -106,7 +107,7 @@ void json_extract
 
 	for(auto property: dynamic_cast<webpp::json::object &>(*p_tree).properties())
 	{
-		auto value = dynamic_cast<webpp::json::string &>(*property.second).value();
+		auto value = dynamic_cast<webpp::json::string &>(*property.second).get();
 
 		p_out->insert(std::make_pair(property.first, value));
 	}
