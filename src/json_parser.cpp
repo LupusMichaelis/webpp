@@ -27,12 +27,10 @@ void skip_spaces(char & c, std::istream & in)
 		skip(c, in);
 }
 
-void parse(std::unique_ptr<value> & p_value, std::istream & in)
+void parse(std::unique_ptr<json::value> & p_value, std::istream & in)
 {
 	parser engine;
-	std::unique_ptr<parser::value> p_parser_value;
-	engine.parse(p_parser_value, in);
-	p_parser_value->ref_value().clone(p_value);
+	engine.parse(p_value, in);
 }
 
 struct parser::impl
@@ -105,6 +103,13 @@ json::value const & parser::value::ref_value() const
 parser::value::value(value const & value)
 	: mp_impl {std::make_unique<impl>(value.mp_impl->m_parser)}
 {
+}
+
+void parser::parse(std::unique_ptr<json::value> & p_value, std::istream & in)
+{
+	std::unique_ptr<value> p_parser_value;
+	parse(p_parser_value, in);
+	p_parser_value->ref_value().clone(p_value);
 }
 
 void parser::parse(std::unique_ptr<value> & p_value, std::istream & in)

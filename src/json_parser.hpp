@@ -9,7 +9,6 @@
 
 namespace webpp { namespace json {
 
-class parser;
 class value;
 
 void parse(std::unique_ptr<value> & p_tree, std::istream & in);
@@ -17,16 +16,21 @@ void parse(std::unique_ptr<value> & p_value, char & c, std::istream & in);
 
 class parser
 {
+	friend void parse(std::unique_ptr<value> & p_value, std::istream & in);
+
 	struct impl;
 	std::unique_ptr<impl> mp_impl;
 
+	class value;
+
 	public:
-		class value;
 		parser();
+
+		void parse(std::unique_ptr<json::value> & p_value, std::istream & in);
 		void parse(std::unique_ptr<value> & p_value, std::istream & in);
 		void parse(std::unique_ptr<value> & p_value, char & c, std::istream & in);
 
-	//private:
+	private:
 
 		class value
 		{
