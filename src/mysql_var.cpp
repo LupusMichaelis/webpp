@@ -4,21 +4,39 @@
 
 #include <string>
 #include <stdexcept>
+#include <iostream>
 
 namespace webpp { namespace mysql {
 
+visitor::~visitor()
+{
+}
+
+struct printer::impl
+{
+	impl(std::ostream & out) : m_out(out) {};
+	std::ostream & m_out;
+};
+
+printer::printer(std::ostream & out)
+	: mp_impl{std::make_unique<impl>(out)}
+{
+}
+
+void printer::visit(string & v)
+{
+	mp_impl->m_out << v.get();
+}
+
+printer:: ~printer()
+{
+}
+
 struct var::impl
 {
-	impl() : is_null(true), is_string(false), is_boolean(false), is_integer(false) {}
+	impl() : is_null(true) {}
 
-	bool		is_null;
-	bool		is_string;
-	bool		is_boolean;
-	bool		is_integer;
-
-	std::string	string;
-	long long   integer;
-	bool		boolean;
+	bool is_null;
 };
 
 var::var()
@@ -31,47 +49,30 @@ var::var(var const & copied)
 {
 }
 
+var::var(std::nullptr_t)
+	: var()
+{
+}
+
 var::~var()
 {
 }
 
-var & var::operator=(var const & copied)
+void var::set_not_null()
+{
+	mp_impl->is_null = false;
+}
+
+var & var::operator =(var const & copied)
 {
 	auto p_impl = std::make_unique<impl>(*copied.mp_impl);
 	std::swap(p_impl, mp_impl);
 	return *this;
 }
 
-var & var::operator=(std::nullptr_t const & null)
+var & var::operator =(std::nullptr_t)
 {
-	*mp_impl = impl();
-	return *this;
-}
-
-var & var::operator=(std::string const & value)
-{
-	*mp_impl = impl();
-	mp_impl->string = value;
-	mp_impl->is_null = false;
-	mp_impl->is_string = true;
-	return *this;
-}
-
-var & var::operator=(int const & value)
-{
-	*mp_impl = impl();
-	mp_impl->integer = value;
-	mp_impl->is_null = false;
-	mp_impl->is_integer = true;
-	return *this;
-}
-
-var & var::operator=(bool const & value)
-{
-	*mp_impl = impl();
-	mp_impl->boolean = value;
-	mp_impl->is_null = false;
-	mp_impl->is_boolean = true;
+	mp_impl->is_null = true;
 	return *this;
 }
 
@@ -82,50 +83,61 @@ bool var::operator ==(std::nullptr_t) const
 
 var::operator bool() const
 {
-	return !mp_impl->is_null
-		&& !(is_string() && mp_impl->string.empty())
-		&& !(is_boolean() && !mp_impl->boolean)
-		&& !(is_integer() && !mp_impl->integer)
-		;
+	return !mp_impl->is_null;
 }
 
-std::string const & var::string() const
+string::string()
+	: m_value {}
 {
-	if(!is_string())
-		throw std::runtime_error("Value is not a string");
-
-	return mp_impl->string;
 }
 
-bool const var::is_string() const
+string::string(string const & copied)
+	: var {copied}, m_value {copied.m_value}
 {
-	return mp_impl->is_string;
 }
 
-int const var::integer() const
+string::string(std::string const & copied)
+	: var(), m_value {copied}
 {
-	if(!is_integer())
-		throw std::runtime_error("Value is not an integer");
-
-	return mp_impl->integer;
+	set_not_null();
 }
 
-bool const var::is_integer() const
+string::operator bool() const
 {
-	return mp_impl->is_integer;
+	return var::operator bool() or !m_value.empty();
 }
 
-bool const var::boolean() const
+string & string::operator=(string const & copied)
 {
-	if(!is_boolean())
-		throw std::runtime_error("Value is not an boolean");
+	set_not_null();
+	m_value = copied;
 
-	return mp_impl->boolean;
+	return *this;
 }
 
-bool const var::is_boolean() const
+std::string const & string::get() const
 {
-	return mp_impl->is_boolean;
+	return m_value;
+}
+
+void string::set(std::string const & new_value)
+{
+	set_not_null();
+	m_value = new_value;
+}
+
+bool string::operator ==(std::string const & rhs) const
+{
+	return nullptr != *this and m_value == rhs;
+}
+
+void string::accept(visitor & v)
+{
+	v.visit(*this);
+}
+
+string::~string()
+{
 }
 
 } } // namespace webpp::mysql

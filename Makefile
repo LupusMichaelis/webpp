@@ -21,9 +21,9 @@ SRCDIR=src
 CPPFILES= \
 	  json_parser.cpp \
 	  json.cpp \
+	  mysql_var.cpp \
 	  mysql_result.cpp \
 	  mysql_connection.cpp \
-	  mysql_var.cpp \
 	  model.cpp \
 
 SRCS=$(addprefix $(SRCDIR)/, $(CPPFILES))
@@ -34,8 +34,11 @@ TARGET=webpp
 
 target: $(TARGET)
 
-tests: test_json
+tests: test_json test_mysql_var
 	./$<
+
+test_mysql_var: src/mysql_var.o tests/test_mysql_var.o
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 test_json: src/json_parser.o src/json.o tests/test_json.o
 	$(CXX) -o $@ $^ $(LDFLAGS)
