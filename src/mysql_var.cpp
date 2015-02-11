@@ -3,6 +3,7 @@
 #include "memory.hpp"
 
 #include <string>
+#include <cstring>
 #include <stdexcept>
 #include <iostream>
 
@@ -24,6 +25,11 @@ printer::printer(std::ostream & out)
 }
 
 void printer::visit(string & v)
+{
+	mp_impl->m_out << v.get();
+}
+
+void printer::visit(integer & v)
 {
 	mp_impl->m_out << v.get();
 }
@@ -81,6 +87,11 @@ bool var::operator ==(std::nullptr_t) const
 	return mp_impl->is_null;
 }
 
+bool var::operator ==(var const & rhs) const
+{
+	return nullptr == *this and nullptr == rhs;
+}
+
 var::operator bool() const
 {
 	return !mp_impl->is_null;
@@ -126,6 +137,12 @@ void string::set(std::string const & new_value)
 	m_value = new_value;
 }
 
+bool string::operator ==(string const & rhs) const
+{
+	return var::operator ==(rhs)
+		or (m_value == rhs.m_value);
+}
+
 bool string::operator ==(std::string const & rhs) const
 {
 	return nullptr != *this and m_value == rhs;
@@ -137,6 +154,67 @@ void string::accept(visitor & v)
 }
 
 string::~string()
+{
+}
+
+integer::integer()
+	: m_value()
+{
+}
+
+integer::integer(integer const & copied)
+	: m_value(copied.m_value)
+{
+}
+
+integer::integer(std::string const & copied)
+	: integer(std::atoi(copied.c_str()))
+{
+}
+
+integer::integer(long long const copied)
+	: m_value(copied)
+{
+}
+
+integer & integer::operator=(integer const & copied)
+{
+	m_value = copied.m_value;
+	return *this;
+}
+
+integer::operator bool() const
+{
+	return nullptr != *this and m_value;
+}
+
+long long const & integer::get() const
+{
+	return m_value;
+}
+
+void integer::set(long long const new_value)
+{
+	set_not_null();
+	m_value = new_value;
+}
+
+bool integer::operator ==(long long const rhs) const
+{
+	return nullptr != *this or (m_value and rhs);
+}
+
+bool integer::operator ==(integer const & rhs) const
+{
+	return var::operator ==(rhs) or *this == rhs.m_value;
+}
+
+void integer::accept(visitor & v)
+{
+	v.visit(*this);
+}
+
+integer::~integer()
 {
 }
 

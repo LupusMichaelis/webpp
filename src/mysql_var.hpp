@@ -3,6 +3,10 @@
 
 #	include "memory.hpp"
 #	include <string>
+/**
+ * \todo boolean
+ * \todo the operator == algorithm is flawed, need to review the logic
+ */
 
 namespace webpp { namespace mysql {
 
@@ -15,13 +19,13 @@ class visitor
 	public:
 		/*
 		virtual void visit(boolean & v) = 0;
-		virtual void visit(integer & v) = 0;
 		*/
+		virtual void visit(integer & v) = 0;
 		virtual void visit(string & v) = 0;
 		virtual ~visitor();
 };
 
-class printer
+class printer : public visitor
 {
 	struct impl;
 	std::unique_ptr<impl> mp_impl;
@@ -29,6 +33,7 @@ class printer
 	public:
 		explicit printer(std::ostream & out);
 		virtual void visit(string & v);
+		virtual void visit(integer & v) = 0;
 		virtual ~printer();
 };
 
@@ -52,6 +57,7 @@ class var
 
 		virtual var & operator=(std::nullptr_t);
 		virtual bool operator ==(std::nullptr_t) const;
+		virtual bool operator ==(var const & rhs) const;
 
 		virtual void accept(visitor & v) = 0;
 };
@@ -72,6 +78,11 @@ class string : public var
 		virtual void set(std::string const & new_value);
 
 		//using var::operator ==;
+		virtual bool operator ==(var const & rhs) const
+		{
+			return var::operator ==(rhs);
+		}
+		virtual bool operator ==(string const & rhs) const;
 		virtual bool operator ==(std::nullptr_t) const
 		{
 			return var::operator ==(nullptr);
@@ -80,6 +91,34 @@ class string : public var
 
 		virtual void accept(visitor & v);
 		virtual ~string();
+};
+
+class integer : public var
+{
+	long long m_value;
+
+	public:
+		integer();
+		integer(integer const & copied);
+		explicit integer(std::string const & copied);
+		explicit integer(long long const copied);
+		virtual integer & operator=(integer const & copied);
+
+		virtual operator bool() const;
+
+		virtual long long const & get() const;
+		virtual void set(long long const new_value);
+
+		//using var::operator ==;
+		virtual bool operator ==(integer const & rhs) const;
+		virtual bool operator ==(std::nullptr_t) const
+		{
+			return var::operator ==(nullptr);
+		}
+		virtual bool operator ==(long long const rhs) const;
+
+		virtual void accept(visitor & v);
+		virtual ~integer();
 };
 
 } } // namespace webpp::mysql

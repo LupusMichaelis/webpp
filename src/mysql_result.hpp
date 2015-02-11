@@ -17,7 +17,8 @@ class result
 	std::unique_ptr<impl> mp_impl;
 
 	public:
-		typedef std::map<std::string, var>	row_type;
+		typedef std::map<std::string, std::shared_ptr<var>>
+											row_type;
 		typedef std::vector<row_type>		row_list_type;
 		typedef std::vector<std::pair<std::string, enum enum_field_types>>
 											field_list_type;

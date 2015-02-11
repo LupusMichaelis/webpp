@@ -26,7 +26,8 @@ class model
 	public:
 		typedef std::map<std::string, std::string>	criteria_type;
 
-		typedef std::map<std::string, mysql::var>	row_type;
+		typedef std::map<std::string, std::shared_ptr<mysql::var>>
+													row_type;
 		typedef std::vector<row_type>				row_list_type;
 
 	public:

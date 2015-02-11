@@ -46,8 +46,25 @@ std::map<std::string, std::string> const make_environment()
 #include "src/mysql_connection.hpp"
 #include "src/model.hpp"
 
+class printer_my_json
+	: public webpp::mysql::visitor
+{
+	std::ostream & m_out;
+
+	public:
+		printer_my_json(std::ostream & out)
+			: webpp::mysql::visitor(), m_out(out)
+		{ }
+
+		virtual void visit(webpp::mysql::integer & v) { m_out << v.get(); }
+		virtual void visit(webpp::mysql::string & v) { m_out << "\"" << v.get() << "\""; }
+
+		virtual ~printer_my_json() { }
+};
+
 void print_json(std::ostream & out, webpp::model::row_list_type rows)
 {
+	printer_my_json printer{out};
 	out << "[ ";
 	for(auto row: rows)
 	{
@@ -60,14 +77,12 @@ void print_json(std::ostream & out, webpp::model::row_list_type rows)
 				out << ", ";
 			if(nullptr == field.second)
 				out << boost::format("\"%s\": null\n") % field.first;
-			else if(field.second.is_integer())
-				out << boost::format("\"%s\": %s\n") % field.first % field.second.integer();
-			else if(field.second.is_boolean())
-				out << boost::format("\"%s\": %s\n")
-					% field.first
-					% (field.second.boolean() ? "true" : "false");
 			else
-				out << boost::format("\"%s\": \"%s\"\n") % field.first % field.second.string();
+			{
+				out << "\"" << field.first << "\": ";
+				field.second->accept(printer);
+				out << "\n";
+			}
 		}
 		out << " }";
 	}
