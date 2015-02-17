@@ -26,12 +26,18 @@ printer::printer(std::ostream & out)
 
 void printer::visit(string & v)
 {
-	mp_impl->m_out << v.get();
+	if(nullptr == v)
+		mp_impl->m_out << "null";
+	else
+		mp_impl->m_out << v.get();
 }
 
 void printer::visit(integer & v)
 {
-	mp_impl->m_out << v.get();
+	if(nullptr == v)
+		mp_impl->m_out << "null";
+	else
+		mp_impl->m_out << v.get();
 }
 
 printer:: ~printer()

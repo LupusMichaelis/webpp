@@ -33,7 +33,7 @@ class printer : public visitor
 	public:
 		explicit printer(std::ostream & out);
 		virtual void visit(string & v);
-		virtual void visit(integer & v) = 0;
+		virtual void visit(integer & v);
 		virtual ~printer();
 };
 
