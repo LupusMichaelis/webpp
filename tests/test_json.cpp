@@ -164,6 +164,51 @@ Ensure(literal_is_badformed)
 	}
 }
 
+Ensure(parsed_equals_generated)
+{
+	std::string original {"{\"first\":true}"};
+	std::stringstream in {original};
+	std::stringstream dump_original;
+	{
+		std::unique_ptr<webpp::json::value> p_tree;
+		webpp::json::parse(p_tree, in);
+		webpp::json::dump(dump_original, *p_tree);
+	}
+	std::string parsed {dump_original.str()};
+
+	std::unique_ptr<webpp::json::object> p_tree;
+	build(p_tree);
+	webpp::json::add_property(*p_tree, "first", true);
+	std::stringstream dump_generated;
+	webpp::json::dump(dump_generated, *p_tree);
+	std::string generated {dump_generated.str()};
+
+	assert_that(generated.c_str(), is_equal_to_string(parsed.c_str()));
+}
+
+Ensure(parsed_equals_generated_with_holes)
+{
+	std::string original {"[null,2,null,[]]"};
+	std::stringstream in {original};
+	std::stringstream dump_original;
+	{
+		std::unique_ptr<webpp::json::value> p_tree;
+		webpp::json::parse(p_tree, in);
+		webpp::json::dump(dump_original, *p_tree);
+	}
+	std::string parsed {dump_original.str()};
+
+	std::unique_ptr<webpp::json::array> p_tree;
+	build(p_tree);
+	webpp::json::add(*p_tree, 1, 2);
+	webpp::json::add(*p_tree, 3, webpp::json::array());
+	std::stringstream dump_generated;
+	webpp::json::dump(dump_generated, *p_tree);
+	std::string generated {dump_generated.str()};
+
+	assert_that(generated.c_str(), is_equal_to_string(parsed.c_str()));
+}
+
 TestSuite *our_tests()
 {
 	TestSuite *suite = create_test_suite();
@@ -176,6 +221,8 @@ TestSuite *our_tests()
 	add_test(suite, object_complex_wellformed);
 
 	add_test(suite, literal_is_badformed);
+	add_test(suite, parsed_equals_generated);
+	add_test(suite, parsed_equals_generated_with_holes);
 
 	return suite;
 }
