@@ -1,36 +1,26 @@
 
 #include "../src/url.hpp"
 
-#include <string>
-#include <iostream>
-#include <cassert>
+#include <sstream>
+#include <cgreen/cgreen.h>
 
+using namespace cgreen;
 
-int main()
+Ensure(web_url_is)
 {
-	try
-	{
-		std::string raw("http://lupusmic.org/");
-		Url perso(raw);
+	std::string raw("http://lupusmic.org/");
+	webpp::url perso(raw);
 
-		assert(raw == perso.str());
-		std::cout << perso.specific();
-		assert(perso.specific() == "//lupusmic.org/");
+	assert_that(perso.str().c_str(), is_equal_to_string(raw.c_str()));
+	assert_that(perso.specific().c_str(), is_equal_to_string("//lupusmic.org/"));
 
-		WebUrl website(perso);
-		assert(website.host() == "lupusmic.org");
+	assert_that(perso.host().c_str(), is_equal_to_string("lupusmic.org"));
+}
 
-	}
-	catch(std::exception const & e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
-	catch(std::string const & s)
-	{
-		std::cerr << s << std::endl;
-	}
-	catch(char const * msg)
-	{
-		std::cerr << msg << std::endl;
-	}
+TestSuite *our_tests()
+{
+	TestSuite *suite = create_test_suite();
+	add_test(suite, web_url_is);
+
+	return suite;
 }

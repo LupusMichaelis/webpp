@@ -47,8 +47,15 @@ target: $(TARGET)
 tests: test_json test_url test_mysql_var
 	./$<
 
-test_url: src/url.o src/test_url.o
-	$(CXX) -o $@ $(OBJS) $(TESTLDFLAGS)
+# URL tests ############################################################
+test_url: tests/test_url.so
+	cgreen-runner $^
+
+tests/test_url.so: src/url.o tests/test_url.o
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -lstdc++ -fPIC
+
+tests/test_url.o: tests/test_url.cpp
+	$(CXX) -o $@ -c $^ -I=$(HOME)/.local/include/ $(CXXFLAGS)
 
 # MySQL Variable tests #################################################
 test_mysql_var: tests/test_mysql_var.so

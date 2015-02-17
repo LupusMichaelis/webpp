@@ -2,71 +2,62 @@
 #include "url.hpp"
 #include <algorithm>
 
-Url::~Url() { } ;
-HostUrl::~HostUrl() { } ;
-WebUrl::~WebUrl() { } ;
-
-std::string const Url::str()
+namespace webpp
 {
-	return const_cast<std::string&>(const_cast<Url const &>(*this).str());
+
+url::~url() { };
+
+std::string const url::str()
+{
+	return const_cast<std::string&>(const_cast<url const &>(*this).str());
 }
 
-std::string const & Url::str() const
+std::string const & url::str() const
 {
 	return raw();
 }
 
-std::string & Url::raw()
+std::string & url::raw()
 {
-	return const_cast<std::string &>(const_cast<Url const &>(*this).raw());
+	return const_cast<std::string &>(const_cast<url const &>(*this).raw());
 }
 
-std::string const & Url::raw() const
+std::string const & url::raw() const
 {
 	return m_raw;
 }
 
-std::string::const_iterator Url::seek_colon() const
+std::string::const_iterator url::seek_colon() const
 {
-	auto pos = std::find(str().begin(), str().end(), ':') ;
+	auto pos = std::find(str().begin(), str().end(), ':');
 	if(pos == str().end())
-		throw "URL doesn't have a scheme" ;
+		throw "URL doesn't have a scheme";
 
-	return pos ;
+	return pos;
 }
 
-std::string const Url::scheme() const
+std::string const url::scheme() const
 {
-	return std::string(str().begin(), seek_colon()) ;
+	return std::string(str().begin(), seek_colon());
 }
 
-std::string const Url::specific() const
+std::string const url::specific() const
 {
-	return std::string(++seek_colon(), str().end()) ;
+	return std::string(++seek_colon(), str().end());
 }
 
-HostUrl::HostUrl(Url const & copied)
-	: Url {copied}
+std::string const url::host() const
 {
+	auto begin = seek_colon();
 
-}
-
-std::string const HostUrl::host() const
-{
-	auto begin = seek_colon() ;
-
-	std::string sep("://") ;
-	std::advance(begin, sep.size()) ;
+	std::string sep("://");
+	std::advance(begin, sep.size());
 	if(begin == str().end())
-		throw "Missing separator in URL" ;
+		throw "Missing separator in URL";
 
-	auto end = std::find(begin, str().end(), '/') ;
+	auto end = std::find(begin, str().end(), '/');
 
-	return std::string(begin, end) ;
+	return std::string(begin, end);
 }
 
-WebUrl::WebUrl(Url const & copied)
-	: HostUrl {copied}
-{
-
-}
+}; // namespace webpp
