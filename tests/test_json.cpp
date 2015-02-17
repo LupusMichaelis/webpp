@@ -6,40 +6,142 @@
 #include <iostream>
 #include <sstream>
 #include <cassert>
+#include <cgreen/cgreen.h>
 
-int main(int argc, char * argv[])
+using namespace cgreen;
+
+Ensure(empty_object_is_wellformed)
 {
-	std::vector<std::string> wellformed { "{}"
-		, "[]"
-		, "[[]]"
-		, "{ \"array\": [1, \"rho\", 3, null, true, false, { \"boom\": 5, \"bam\": 2}] }"
-		, "[null]"
-		, "{\"null\":null}"
-		, "[1,[]]"
-		, "[1.2]"
+	std::string s {"{}"};
+	std::stringstream in {s};
+	std::unique_ptr<webpp::json::value> p_tree;
+	webpp::json::parse(p_tree, in);
+
+	assert_that((bool) p_tree, is_true);
+	assert_that(dynamic_cast<webpp::json::object&>(*p_tree).properties().size(), is_equal_to(0));
+}
+
+Ensure(empty_array_is_wellformed)
+{
+	std::string s {"[]"};
+	std::stringstream in {s};
+	std::unique_ptr<webpp::json::value> p_tree;
+	webpp::json::parse(p_tree, in);
+
+	assert_that((bool) p_tree, is_true);
+	assert_that(dynamic_cast<webpp::json::array&>(*p_tree).values().size(), is_equal_to(0));
+}
+
+Ensure(nested_array_is_wellformed)
+{
+	std::string s {"[[]]"};
+	std::stringstream in {s};
+	std::unique_ptr<webpp::json::value> p_tree;
+	webpp::json::parse(p_tree, in);
+
+	assert_that((bool) p_tree, is_true);
+	assert_that(dynamic_cast<webpp::json::array&>(*p_tree).values().size(), is_equal_to(1));
+	assert_that(
+		dynamic_cast<webpp::json::array&>(
+			*dynamic_cast<webpp::json::array&>(*p_tree).values()[0])
+				.values().size()
+		, is_equal_to(0));
+}
+
+Ensure(array_with_null_is_wellformed)
+{
+	std::string s {"[null]"};
+	std::stringstream in {s};
+	std::unique_ptr<webpp::json::value> p_tree;
+	webpp::json::parse(p_tree, in);
+
+	assert_that((bool) p_tree, is_true);
+
+	auto & a = dynamic_cast<webpp::json::array&>(*p_tree);
+	assert_that(a.values().size(), is_equal_to(1));
+	dynamic_cast<webpp::json::null&>(*a.values()[0]);
+}
+
+Ensure(object_with_null_is_wellformed)
+{
+	std::string s {"{\"null\":null}"};
+	std::stringstream in {s};
+	std::unique_ptr<webpp::json::value> p_tree;
+	webpp::json::parse(p_tree, in);
+
+	assert_that((bool) p_tree, is_true);
+
+	auto & o = dynamic_cast<webpp::json::object&>(*p_tree);
+	assert_that(o.properties().size(), is_equal_to(1));
+
+	auto e = o.properties().cbegin();
+	assert_that(e->first.c_str(), is_equal_to_string("null"));
+	dynamic_cast<webpp::json::null&>(*e->second);
+}
+
+Ensure(array_number_empty_array_is_wellformed)
+{
+	std::string s {"[1,[]]"};
+	std::stringstream in {s};
+	std::unique_ptr<webpp::json::value> p_tree;
+	webpp::json::parse(p_tree, in);
+
+	assert_that((bool) p_tree, is_true);
+
+	auto & a = dynamic_cast<webpp::json::array&>(*p_tree);
+	assert_that(a.values().size(), is_equal_to(2));
+
+	auto & e1 = dynamic_cast<webpp::json::number&>(*a.values()[0]);
+	assert_that(e1.get().c_str(), is_equal_to_string("1"));
+
+	auto & e2 = dynamic_cast<webpp::json::array&>(*a.values()[1]);
+	assert_that(e2.values().size(), is_equal_to(0));
+}
+
+Ensure(object_complex_wellformed)
+{
+	std::string s {"{ \"array\": [1, \"rho\", 3, null, true, false, { \"boom\": 5, \"bam\": 2}] }"};
+	std::stringstream in {s};
+	std::unique_ptr<webpp::json::value> p_tree;
+	webpp::json::parse(p_tree, in);
+
+	assert_that((bool) p_tree, is_true);
+
+	// TODO add more assertion on the elements
+}
+
+Ensure(array_contains_number)
+{
+	for(auto literal:
+		{ "[1.2]"
 		, "[-1.2]"
 		, "[-1.2e23]"
 		, "[1.2e23]"
 		, "[1.2e+23]"
 		, "[1.2e-23]"
-	};
-
-	for(auto s: wellformed)
+		})
 	{
-		std::cout << "===========================\n";
-		std::cout << s;
-		std::cout << "\n---------------------------\n";
-
+		std::string s {literal};
 		std::stringstream in {s};
 		std::unique_ptr<webpp::json::value> p_tree;
 		webpp::json::parse(p_tree, in);
-		std::cout << "---------------------------\n";
-		webpp::json::dump(std::cout, *p_tree);
 
-		std::cout << "\n---------------------------\n";
-		std::cout << "===========================" << std::endl;
+		assert_that((bool) p_tree, is_true);
+
+		auto & a = dynamic_cast<webpp::json::array&>(*p_tree);
+		assert_that(a.values().size(), is_equal_to(1));
+
+		auto & e = dynamic_cast<webpp::json::number&>(*a.values()[0]);
+		std::string out;
+		out += "[";
+		out += e.get();
+		out += "]";
+		assert_that(out.c_str(), is_equal_to_string(s.c_str()));
 	}
+}
 
+Ensure(literal_is_badformed)
+{
 	std::vector<std::string> badformed { "{{}"
 		, "["
 		, "[[]"
@@ -51,95 +153,29 @@ int main(int argc, char * argv[])
 		, "[--1.2e23]", "[-+1.2e23]", "[1.2e--23]", "[1.2e+-23]", "[1.2e-+23]", "[1.2e++23]", "[1.2e+23-]"
 	};
 
-	for(auto s: badformed)
+	for(auto literal: badformed)
 	{
-		std::cout << "===========================\n";
-		std::cout << s;
-		std::cout << "\n---------------------------\n";
-
+		std::string s {literal};
 		std::stringstream in {s};
 		std::unique_ptr<webpp::json::value> p_tree;
-		std::cout << "---------------------------\n";
-		try
-		{
-			webpp::json::parse(p_tree, in);
-			assert(false);
-		}
-		catch(char const * p_e)
-		{
-			std::cout << "Caught";
-		}
 
-		std::cout << "\n---------------------------\n";
-		std::cout << "===========================" << std::endl;
+		assert_throws(char *, webpp::json::parse(p_tree, in));
+		assert_that((bool) p_tree, is_false);
 	}
+}
 
-	{
-		std::string original {"{\"first\":true}"};
-		std::stringstream in {original};
-		std::stringstream out;
-		{
-			std::unique_ptr<webpp::json::value> p_tree;
-			webpp::json::parse(p_tree, in);
-			webpp::json::dump(out, *p_tree);
-		}
-		std::string parsed {out.str()};
-		out.clear();
+TestSuite *our_tests()
+{
+	TestSuite *suite = create_test_suite();
+	add_test(suite, empty_array_is_wellformed);
+	add_test(suite, nested_array_is_wellformed);
+	add_test(suite, empty_object_is_wellformed);
+	add_test(suite, array_with_null_is_wellformed);
+	add_test(suite, object_with_null_is_wellformed);
+	add_test(suite, array_number_empty_array_is_wellformed);
+	add_test(suite, object_complex_wellformed);
 
-		std::unique_ptr<webpp::json::object> p_tree;
-		build(p_tree);
-		webpp::json::add_property(*p_tree, "first", true);
-		std::stringstream out2;
-		webpp::json::dump(out2, *p_tree);
-		std::string generated {out2.str()};
+	add_test(suite, literal_is_badformed);
 
-		std::cout << "===========================\n";
-		std::cout << (boost::format("%s:%d\n") % __FILE__ % __LINE__).str();
-		std::cout << "---------------------------\n";
-		std::cout << original;
-		std::cout << "\n---------------------------\n";
-		std::cout << generated;
-		std::cout << "\n---------------------------\n";
-		std::cout << "\n---------------------------\n";
-		std::cout << parsed;
-		std::cout << "\n---------------------------\n";
-		assert(generated == parsed);
-		std::cout << "===========================" << std::endl;
-	}
-
-	{
-		std::string original {"[null,2,null,[]]"};
-		std::stringstream in {original};
-		std::stringstream out;
-		{
-			std::unique_ptr<webpp::json::value> p_tree;
-			webpp::json::parse(p_tree, in);
-			webpp::json::dump(out, *p_tree);
-		}
-		std::string parsed {out.str()};
-		out.clear();
-
-		std::unique_ptr<webpp::json::array> p_tree;
-		build(p_tree);
-		webpp::json::add(*p_tree, 1, 2);
-		webpp::json::add(*p_tree, 3, webpp::json::array());
-		std::stringstream out2;
-		webpp::json::dump(out2, *p_tree);
-		std::string generated {out2.str()};
-
-		std::cout << "===========================\n";
-		std::cout << (boost::format("%s:%d\n") % __FILE__ % __LINE__).str();
-		std::cout << "---------------------------\n";
-		std::cout << original;
-		std::cout << "\n---------------------------\n";
-		std::cout << generated;
-		std::cout << "\n---------------------------\n";
-		std::cout << "\n---------------------------\n";
-		std::cout << parsed;
-		std::cout << "\n---------------------------\n";
-		assert(generated == parsed);
-		std::cout << "===========================" << std::endl;
-	}
-
-	return 0;
+	return suite;
 }
