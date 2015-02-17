@@ -24,8 +24,9 @@ TESTLDFLAGS= \
 		-lcgreen++ \
 		$(LDFLAGS) \
 
-
-SRCDIR=src
+TESTCXXFLAGS= \
+		$(CXXFLAGS) \
+		-I=$(HOME)/.local/include/ \
 
 CPPFILES= \
 	  url.cpp \
@@ -36,14 +37,23 @@ CPPFILES= \
 	  mysql_connection.cpp \
 	  model.cpp \
 
+SRCDIR=src
 SRCS=$(addprefix $(SRCDIR)/, $(CPPFILES))
 OBJS=$(SRCS:.cpp=.o)
 
 .PHONY: target tests
 TARGET=webpp
 
+########################################################################
 target: $(TARGET)
 
+$(TARGET): $(OBJS) $(addprefix $(TARGET), .o)
+	$(CXX) -o $@ $^ $(LDFLAGS)
+
+%.o: %.cpp
+	$(CXX) -o $@ -c $< $(CXXFLAGS)
+
+########################################################################
 tests: test_json test_url test_mysql_var
 	./$<
 
@@ -55,7 +65,7 @@ tests/test_url.so: src/url.o tests/test_url.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -lstdc++ -fPIC
 
 tests/test_url.o: tests/test_url.cpp
-	$(CXX) -o $@ -c $^ -I=$(HOME)/.local/include/ $(CXXFLAGS)
+	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
 
 # MySQL Variable tests #################################################
 test_mysql_var: tests/test_mysql_var.so
@@ -65,7 +75,7 @@ tests/test_mysql_var.so: src/mysql_var.o tests/test_mysql_var.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -lstdc++ -fPIC
 
 tests/test_mysql_var.o: tests/test_mysql_var.cpp
-	$(CXX) -o $@ -c $^ -I=$(HOME)/.local/include/ $(CXXFLAGS)
+	$(CXX) -o $@ -c $^ $(TESTLDFLAGS)
 
 # JSON parser tests ####################################################
 test_json: tests/test_json.so
@@ -75,14 +85,8 @@ tests/test_json.so: src/json_parser.o src/json.o tests/test_json.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -lstdc++ -fPIC
 
 tests/test_json.o: tests/test_json.cpp
-	$(CXX) -o $@ -c $^ -I=$(HOME)/.local/include/ $(CXXFLAGS)
+	$(CXX) -o $@ -c $^ $(TESTLDFLAGS)
 
 ########################################################################
-$(TARGET): $(OBJS) $(addprefix $(TARGET), .o)
-	$(CXX) -o $@ $^ $(LDFLAGS)
-
-%.o: %.cpp
-	$(CXX) -o $@ -c $< $(CXXFLAGS)
-
 clean:
 	-rm -rf $(OBJS) $(TARGET) $(TARGET:=.o)
