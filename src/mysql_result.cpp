@@ -20,7 +20,7 @@ result::~result()
 
 result::operator bool() const
 {
-	return true;
+	return !mp_impl->m_field_list.empty() or !mp_impl->m_updated_rows;
 }
 
 void result::fields(field_list_type field_list)
