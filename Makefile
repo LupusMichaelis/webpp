@@ -29,6 +29,7 @@ TESTCXXFLAGS= \
 		-I$(HOME)/.local/include/ \
 
 CPPFILES= \
+	  router.cpp \
 	  url.cpp \
 	  json_parser.cpp \
 	  json.cpp \
@@ -44,7 +45,11 @@ OBJS=$(SRCS:.cpp=.o)
 
 .PHONY: target tests all $(TESTS)
 TARGET=webpp
-TESTS=test_json test_url test_mysql_var
+TESTS= \
+	   test_router \
+	   test_json \
+	   test_url \
+	   test_mysql_var \
 
 all: tests target
 
@@ -59,6 +64,16 @@ $(TARGET): $(OBJS) $(addprefix $(TARGET), .o)
 
 ########################################################################
 tests: $(TESTS)
+
+# Router tests #########################################################
+test_router: tests/test_router.so
+	cgreen-runner $^
+
+tests/test_router.so: src/router.o tests/test_router.o
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -fPIC
+
+tests/test_router.o: tests/test_router.cpp
+	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
 
 # URL tests ############################################################
 test_url: tests/test_url.so
