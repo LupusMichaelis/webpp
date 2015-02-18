@@ -40,6 +40,11 @@ extern template void build<number>(std::unique_ptr<number> & p_node);
 extern template void build<null>(std::unique_ptr<null> & p_node);
 extern template void build<boolean>(std::unique_ptr<boolean> & p_node);
 
+template <typename storage_type>
+void build(std::unique_ptr<value> & p_node);
+
+extern template void build<null>(std::unique_ptr<value> & p_node);
+
 template <typename value_type, typename native_value>
 void build(std::unique_ptr<value_type> & p_node, native_value const & value);
 

@@ -6,6 +6,13 @@
 namespace webpp
 {
 
+namespace json {
+
+class value;
+class array;
+
+}
+
 class convert_mysql_to_json
 	: public mysql::visitor
 {

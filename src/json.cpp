@@ -111,6 +111,14 @@ template void build<number>(std::unique_ptr<number> & p_node);
 template void build<null>(std::unique_ptr<null> & p_node);
 template void build<boolean>(std::unique_ptr<boolean> & p_node);
 
+template <typename storage_type>
+void build(std::unique_ptr<value> & p_node)
+{
+	p_node = std::move(std::make_unique<storage_type>());
+}
+
+template void build<null>(std::unique_ptr<value> & p_node);
+
 template <typename value_type, typename native_value>
 void build(std::unique_ptr<value_type> & p_node, native_value const & value)
 {
@@ -161,25 +169,22 @@ void add_property(object & self, std::string const key, std::unique_ptr<array> &
 
 void add_property(object & self, std::string const key, bool const node_value)
 {
-	std::unique_ptr<json::boolean> p_leaf;
-	build(p_leaf, node_value);
-	std::unique_ptr<value> p_node {std::move(p_leaf)};
+	std::unique_ptr<value> p_node;
+	build<boolean>(p_node, node_value);
 	add_property(self, key, p_node);
 }
 
 void add_property(object & self, std::string const key, std::string const node_value)
 {
-	std::unique_ptr<string> p_leaf;
-	build(p_leaf, node_value);
-	std::unique_ptr<value> p_node {std::move(p_leaf)};
+	std::unique_ptr<value> p_node;
+	build<string>(p_node, node_value);
 	add_property(self, key, p_node);
 }
 
 void add_property(object & self, std::string const key, std::nullptr_t const )
 {
-	std::unique_ptr<null> p_leaf;
-	build(p_leaf);
-	std::unique_ptr<value> p_node {std::move(p_leaf)};
+	std::unique_ptr<value> p_node;
+	build<null>(p_node);
 	add_property(self, key, p_node);
 }
 
@@ -231,9 +236,8 @@ void add(array & self, size_t index, array const array_value)
 
 void add(array & self, size_t index, int const number_value)
 {
-	auto p_number = std::make_unique<number>();
-	p_number->set(number_value);
-	std::unique_ptr<value> p_value {std::move(p_number)};
+	std::unique_ptr<value> p_value;
+	build<number>(p_value, number_value);
 	self.add(index, p_value);
 }
 
