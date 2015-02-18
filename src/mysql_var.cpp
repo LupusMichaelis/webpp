@@ -13,37 +13,6 @@ visitor::~visitor()
 {
 }
 
-struct printer::impl
-{
-	impl(std::ostream & out) : m_out(out) {};
-	std::ostream & m_out;
-};
-
-printer::printer(std::ostream & out)
-	: mp_impl{std::make_unique<impl>(out)}
-{
-}
-
-void printer::visit(string & v)
-{
-	if(nullptr == v)
-		mp_impl->m_out << "null";
-	else
-		mp_impl->m_out << v.get();
-}
-
-void printer::visit(integer & v)
-{
-	if(nullptr == v)
-		mp_impl->m_out << "null";
-	else
-		mp_impl->m_out << v.get();
-}
-
-printer:: ~printer()
-{
-}
-
 struct var::impl
 {
 	impl() : is_null(true) {}

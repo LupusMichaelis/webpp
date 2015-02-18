@@ -1,8 +1,51 @@
 
 #include "../src/mysql_var.hpp"
 
+#include <iosfwd>
 #include <sstream>
 #include <cgreen/cgreen.h>
+
+namespace {
+
+using namespace webpp::mysql;
+
+class printer : public visitor
+{
+	std::ostream & m_out;
+
+	public:
+		explicit printer(std::ostream & out)
+			: m_out(out) {};
+
+		virtual void visit(boolean & v)
+		{
+			if(nullptr == v)
+				m_out << "null";
+			else
+				m_out << (v ? "true" : "false");
+		}
+
+		virtual void visit(string & v)
+		{
+			if(nullptr == v)
+				m_out << "null";
+			else
+				m_out << v.get();
+		}
+
+		virtual void visit(integer & v)
+		{
+			if(nullptr == v)
+				m_out << "null";
+			else
+				m_out << v.get();
+		}
+
+		virtual ~printer()
+		{
+		}
+};
+} // namespace
 
 using namespace cgreen;
 
@@ -13,7 +56,7 @@ Ensure(null_object_is_null)
 	assert_that(nullptr == null, is_true);
 
 	std::stringstream s;
-	webpp::mysql::printer printer{s};
+	printer printer{s};
 	printer.visit(null);
 
 	std::string extract;
@@ -36,7 +79,7 @@ Ensure(visit_string)
 	assert_that(my_subject == subject, is_true);
 
 	std::stringstream s;
-	webpp::mysql::printer printer{s};
+	printer printer{s};
 	printer.visit(my_subject);
 
 	std::string extract;

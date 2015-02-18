@@ -23,18 +23,6 @@ class visitor
 		virtual ~visitor();
 };
 
-class printer : public visitor
-{
-	struct impl;
-	std::unique_ptr<impl> mp_impl;
-
-	public:
-		explicit printer(std::ostream & out);
-		virtual void visit(string & v);
-		virtual void visit(integer & v);
-		virtual ~printer();
-};
-
 class var
 {
 	struct impl;
