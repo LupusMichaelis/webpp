@@ -1,5 +1,5 @@
 #ifndef HPP_URL_WEBPP
-#	define HPP_URL
+#	define HPP_URL_WEBPP
 
 #	include <string>
 
@@ -35,4 +35,4 @@ class url
 
 } // namespace webpp
 
-#endif // HPP_URL
+#endif // HPP_URL_WEBPP

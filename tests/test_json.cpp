@@ -59,7 +59,7 @@ Ensure(array_with_null_is_wellformed)
 
 	auto & a = dynamic_cast<webpp::json::array&>(*p_tree);
 	assert_that(a.values().size(), is_equal_to(1));
-	dynamic_cast<webpp::json::null&>(*a.values()[0]);
+	(void) dynamic_cast<webpp::json::null&>(*a.values()[0]);
 }
 
 Ensure(object_with_null_is_wellformed)
@@ -76,7 +76,7 @@ Ensure(object_with_null_is_wellformed)
 
 	auto e = o.properties().cbegin();
 	assert_that(e->first.c_str(), is_equal_to_string("null"));
-	dynamic_cast<webpp::json::null&>(*e->second);
+	(void) dynamic_cast<webpp::json::null&>(*e->second);
 }
 
 Ensure(array_number_empty_array_is_wellformed)

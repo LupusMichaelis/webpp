@@ -19,14 +19,14 @@ LDFLAGS= \
 
 
 TESTLDFLAGS= \
-		-L=$(HOME)/.local/lib64/ \
-		-lcgreen \
+		-L$(HOME)/.local/lib64/ \
+		-L$(HOME)/.local/lib/ \
 		-lcgreen++ \
 		$(LDFLAGS) \
 
 TESTCXXFLAGS= \
 		$(CXXFLAGS) \
-		-I=$(HOME)/.local/include/ \
+		-I$(HOME)/.local/include/ \
 
 CPPFILES= \
 	  url.cpp \
