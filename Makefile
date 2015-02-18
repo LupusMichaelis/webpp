@@ -42,8 +42,10 @@ SRCDIR=src
 SRCS=$(addprefix $(SRCDIR)/, $(CPPFILES))
 OBJS=$(SRCS:.cpp=.o)
 
-.PHONY: target tests
+.PHONY: target tests all
 TARGET=webpp
+
+all: tests target
 
 ########################################################################
 target: $(TARGET)
@@ -89,4 +91,4 @@ tests/test_json.o: tests/test_json.cpp
 
 ########################################################################
 clean:
-	-$(RM) -rf $(OBJS) $(TARGET) $(TARGET:=.o) $(wildcard tests/*.o tests/*.so)
+	-$(RM) -rf $(OBJS) $(TARGET) $(TARGET:=.o) $(wildcard tests/*.o tests/*.so) core
