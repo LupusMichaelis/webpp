@@ -17,9 +17,7 @@ class string;
 class visitor
 {
 	public:
-		/*
 		virtual void visit(boolean & v) = 0;
-		*/
 		virtual void visit(integer & v) = 0;
 		virtual void visit(string & v) = 0;
 		virtual ~visitor();
@@ -119,6 +117,33 @@ class integer : public var
 
 		virtual void accept(visitor & v);
 		virtual ~integer();
+};
+
+class boolean : public var
+{
+	long long m_value;
+
+	public:
+		boolean();
+		boolean(boolean const & copied);
+		explicit boolean(std::string const & copied);
+		explicit boolean(bool const copied);
+		virtual integer & operator=(boolean const & copied);
+
+		virtual operator bool() const;
+
+		virtual void set(bool const new_value);
+
+		//using var::operator ==;
+		virtual bool operator ==(boolean const & rhs) const;
+		virtual bool operator ==(std::nullptr_t) const
+		{
+			return var::operator ==(nullptr);
+		}
+		virtual bool operator ==(bool const rhs) const;
+
+		virtual void accept(visitor & v);
+		virtual ~boolean();
 };
 
 } } // namespace webpp::mysql
