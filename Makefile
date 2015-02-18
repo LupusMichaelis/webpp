@@ -34,6 +34,7 @@ CPPFILES= \
 	  json.cpp \
 	  mysql_var.cpp \
 	  mysql_result.cpp \
+	  convert_rows_to_json.cpp \
 	  mysql_connection.cpp \
 	  model.cpp \
 

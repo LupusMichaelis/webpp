@@ -45,50 +45,22 @@ std::map<std::string, std::string> const make_environment()
 
 #include "src/mysql_connection.hpp"
 #include "src/model.hpp"
-
-class printer_my_json
-	: public webpp::mysql::visitor
-{
-	std::ostream & m_out;
-
-	public:
-		printer_my_json(std::ostream & out)
-			: webpp::mysql::visitor(), m_out(out)
-		{ }
-
-		virtual void visit(webpp::mysql::integer & v) { m_out << v.get(); }
-		virtual void visit(webpp::mysql::string & v) { m_out << "\"" << v.get() << "\""; }
-
-		virtual ~printer_my_json() { }
-};
+#include "src/json.hpp"
+#include "src/convert_rows_to_json.hpp"
 
 void print_json(std::ostream & out, webpp::model::row_list_type rows)
 {
-	printer_my_json printer{out};
-	out << "[ ";
-	for(auto row: rows)
-	{
-		out << "{ ";
+	std::unique_ptr<webpp::json::array> p_array;
+	webpp::json::build(p_array);
+	*p_array << rows;
 
-		bool is_first = true;
-		for(auto field: row)
-		{
-			if(!is_first || (is_first = false))
-				out << ", ";
-			if(nullptr == field.second)
-				out << boost::format("\"%s\": null\n") % field.first;
-			else
-			{
-				out << "\"" << field.first << "\": ";
-				field.second->accept(printer);
-				out << "\n";
-			}
-		}
-		out << " }";
-	}
-	out << " ]" << std::endl;
+	if(0u == p_array->values().size())
+		webpp::json::dump(out, webpp::json::null());
+	else if(1u == p_array->values().size())
+		webpp::json::dump(out, static_cast<webpp::json::value&>(*p_array->values()[0]));
+	else
+		webpp::json::dump(out, static_cast<webpp::json::value&>(*p_array));
 }
-
 
 void print_html(std::ostream & out, webpp::model::row_list_type rows)
 {
@@ -120,9 +92,9 @@ void json_extract
 	std::unique_ptr<webpp::json::value> p_tree;
 	webpp::json::parse(p_tree, in);
 
-	for(auto property: dynamic_cast<webpp::json::object &>(*p_tree).properties())
+	for(auto & property: dynamic_cast<webpp::json::object &>(*p_tree).properties())
 	{
-		auto value = dynamic_cast<webpp::json::string &>(*property.second).get();
+		auto & value = dynamic_cast<webpp::json::string &>(*property.second).get();
 
 		p_out->insert(std::make_pair(property.first, value));
 	}
