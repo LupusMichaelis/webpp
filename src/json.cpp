@@ -111,29 +111,31 @@ template void build<number>(std::unique_ptr<number> & p_node);
 template void build<null>(std::unique_ptr<null> & p_node);
 template void build<boolean>(std::unique_ptr<boolean> & p_node);
 
-void build(std::unique_ptr<string> & p_node, std::string const value)
+template <typename value_type, typename native_value>
+void build(std::unique_ptr<value_type> & p_node, native_value const & value)
 {
-	std::remove_reference<decltype(p_node)>::type p_new;
+	typename std::remove_reference<decltype(p_node)>::type p_new;
 	build(p_new);
 	p_new->set(value);
 	std::swap(p_new, p_node);
 }
 
-void build(std::unique_ptr<boolean> & p_node, bool const value)
+template void build<string, std::string>(std::unique_ptr<string> & p_node, std::string const & value);
+template void build<boolean, bool>(std::unique_ptr<boolean> & p_node, bool const & value);
+template void build<number, std::string>(std::unique_ptr<number> & p_node, std::string const & value);
+
+template <typename value_type, typename native_value>
+void build(std::unique_ptr<value> & p_node, native_value const & value)
 {
-	std::remove_reference<decltype(p_node)>::type p_new;
-	build(p_new);
-	p_new->set(value);
-	std::swap(p_new, p_node);
+	typename std::unique_ptr<value_type> p_new;
+	build(p_new, value);
+	p_node = std::move(p_new);
 }
 
-void build(std::unique_ptr<number> & p_node, std::string const value)
-{
-	std::remove_reference<decltype(p_node)>::type p_new;
-	build(p_new);
-	p_new->set(value);
-	std::swap(p_new, p_node);
-}
+template void build<string, std::string>(std::unique_ptr<value> & p_node, std::string const & value);
+template void build<boolean, bool>(std::unique_ptr<value> & p_node, bool const & value);
+template void build<number, std::string>(std::unique_ptr<value> & p_node, std::string const & value);
+template void build<number, long long>(std::unique_ptr<value> & p_node, long long const & value);
 
 void object::add_property(std::string const key, std::unique_ptr<value> & p_node)
 {
@@ -204,7 +206,12 @@ void add(array & self, size_t index, std::unique_ptr<value> & p_node)
 	self.add(index, p_node);
 }
 
-void add(array & self, std::unique_ptr<object> & p_object);
+void add(array & self, std::unique_ptr<object> & p_object)
+{
+	std::unique_ptr<value> p_value {std::move(p_object)};
+	self.add(p_value);
+}
+
 void add(array & self, std::unique_ptr<array> & p_array);
 void add(array & self, bool const value);
 void add(array & self, std::string const value);

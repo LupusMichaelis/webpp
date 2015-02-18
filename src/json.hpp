@@ -40,9 +40,19 @@ extern template void build<number>(std::unique_ptr<number> & p_node);
 extern template void build<null>(std::unique_ptr<null> & p_node);
 extern template void build<boolean>(std::unique_ptr<boolean> & p_node);
 
-void build(std::unique_ptr<string> & p_node, std::string const value);
-void build(std::unique_ptr<boolean> & p_node, bool const value);
-void build(std::unique_ptr<number> & p_node, std::string const value);
+template <typename value_type, typename native_value>
+void build(std::unique_ptr<value_type> & p_node, native_value const & value);
+
+extern template void build<string, std::string>(std::unique_ptr<string> & p_node, std::string const & value);
+extern template void build<boolean, bool>(std::unique_ptr<boolean> & p_node, bool const & value);
+extern template void build<number, std::string>(std::unique_ptr<number> & p_node, std::string const & value);
+
+template <typename value_type, typename native_value>
+void build(std::unique_ptr<value> & p_node, native_value const & value);
+
+extern template void build<string, std::string>(std::unique_ptr<value> & p_node, std::string const & value);
+extern template void build<boolean, bool>(std::unique_ptr<value> & p_node, bool const & value);
+extern template void build<number, std::string>(std::unique_ptr<value> & p_node, std::string const & value);
 
 class visitor
 {
