@@ -55,7 +55,6 @@ $(TARGET): $(OBJS) $(addprefix $(TARGET), .o)
 
 ########################################################################
 tests: test_json test_url test_mysql_var
-	./$<
 
 # URL tests ############################################################
 test_url: tests/test_url.so
@@ -75,7 +74,7 @@ tests/test_mysql_var.so: src/mysql_var.o tests/test_mysql_var.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -lstdc++ -fPIC
 
 tests/test_mysql_var.o: tests/test_mysql_var.cpp
-	$(CXX) -o $@ -c $^ $(TESTLDFLAGS)
+	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
 
 # JSON parser tests ####################################################
 test_json: tests/test_json.so
@@ -85,8 +84,8 @@ tests/test_json.so: src/json_parser.o src/json.o tests/test_json.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -lstdc++ -fPIC
 
 tests/test_json.o: tests/test_json.cpp
-	$(CXX) -o $@ -c $^ $(TESTLDFLAGS)
+	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
 
 ########################################################################
 clean:
-	-rm -rf $(OBJS) $(TARGET) $(TARGET:=.o)
+	-$(RM) -rf $(OBJS) $(TARGET) $(TARGET:=.o) $(wildcard tests/*.o tests/*.so)
