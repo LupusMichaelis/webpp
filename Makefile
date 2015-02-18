@@ -42,8 +42,9 @@ SRCDIR=src
 SRCS=$(addprefix $(SRCDIR)/, $(CPPFILES))
 OBJS=$(SRCS:.cpp=.o)
 
-.PHONY: target tests all
+.PHONY: target tests all $(TESTS)
 TARGET=webpp
+TESTS=test_json test_url test_mysql_var
 
 all: tests target
 
@@ -57,14 +58,14 @@ $(TARGET): $(OBJS) $(addprefix $(TARGET), .o)
 	$(CXX) -o $@ -c $< $(CXXFLAGS)
 
 ########################################################################
-tests: test_json test_url test_mysql_var
+tests: $(TESTS)
 
 # URL tests ############################################################
 test_url: tests/test_url.so
 	cgreen-runner $^
 
 tests/test_url.so: src/url.o tests/test_url.o
-	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -lstdc++ -fPIC
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -fPIC
 
 tests/test_url.o: tests/test_url.cpp
 	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
@@ -74,7 +75,7 @@ test_mysql_var: tests/test_mysql_var.so
 	cgreen-runner $^
 
 tests/test_mysql_var.so: src/mysql_var.o tests/test_mysql_var.o
-	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -lstdc++ -fPIC
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -fPIC
 
 tests/test_mysql_var.o: tests/test_mysql_var.cpp
 	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
@@ -84,7 +85,7 @@ test_json: tests/test_json.so
 	cgreen-runner $^
 
 tests/test_json.so: src/json_parser.o src/json.o tests/test_json.o
-	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -lstdc++ -fPIC
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -fPIC
 
 tests/test_json.o: tests/test_json.cpp
 	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
