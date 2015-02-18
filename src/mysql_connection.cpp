@@ -36,7 +36,7 @@ void connection::connect(std::string const host
 		, unsigned const port
 		)
 {
-	mysql_real_connect
+	MYSQL * p = mysql_real_connect
 		( mp_impl->p_mysql
 		, host.c_str()
 		, username.c_str()
@@ -46,6 +46,9 @@ void connection::connect(std::string const host
 		, NULL // unix_socket->c_str()
 		, 0 // XXX client_flag!!!
 		);
+
+	if(NULL == p)
+		throw mysql_error(mp_impl->p_mysql);
 }
 
 void connection::query(std::unique_ptr<result> & p_result, std::string const query)
@@ -65,7 +68,6 @@ void connection::query(std::unique_ptr<result> & p_result, std::string const que
 	{
 		if(0 == mysql_num_rows(p_native_result))
 			throw "Too much or too many results";
-
 
 		result::field_list_type field_list;
 		while(MYSQL_FIELD * field = mysql_fetch_field(p_native_result))
