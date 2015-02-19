@@ -29,6 +29,7 @@ TESTCXXFLAGS= \
 		-I$(HOME)/.local/include/ \
 
 CPPFILES= \
+	  http_request.cpp \
 	  router.cpp \
 	  url.cpp \
 	  json_parser.cpp \
@@ -64,6 +65,16 @@ $(TARGET): $(OBJS) $(addprefix $(TARGET), .o)
 
 ########################################################################
 tests: $(TESTS)
+
+# HTTP input request ###################################################
+test_http_request: tests/test_http_request.so
+	cgreen-runner $^
+
+tests/test_http_request.so: src/http_request.o tests/test_http_request.o
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -fPIC
+
+tests/test_http_request.o: tests/test_http_request.cpp
+	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
 
 # Router tests #########################################################
 test_router: tests/test_router.so

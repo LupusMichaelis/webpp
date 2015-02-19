@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <boost/algorithm/string.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include <iostream>
@@ -11,42 +10,27 @@
 
 extern char ** environ;
 
+#include <boost/assign/std/map.hpp>
+
 std::map<std::string, std::string> const make_header()
 {
+	using namespace boost::assign;
+
 	std::map<std::string, std::string> header;
-	//header["Content-type"] = "text/html";
-	header["Status"] = "200 OK";
-	//header["Status"] = "404 Not Found";
-	header["Content-type"] = "application/json";
+	insert(header)
+		("Status", "200 OK")
+	//	("Status", "404 Not Found")
+		("Content-type", "application/json")
+	//	("Content-type", "text/html")
+		;
 
 	return header;
 }
 
-std::map<std::string, std::string> const make_environment()
-{
-	char ** p = environ;
-	std::map<std::string, std::string> environment;
-
-	while(*++p)
-	{
-		std::string const pair {*p};
-		auto colon = std::find(pair.cbegin(), pair.cend(), '=');
-		if(pair.cend() != colon)
-		{
-			std::string key {pair.cbegin(), colon};
-			std::string value {colon + 1, pair.cend()};
-
-			environment[key] = value;
-		}
-	}
-
-	return environment;
-}
-
 #include "src/mysql_connection.hpp"
 #include "src/model.hpp"
-#include "src/json.hpp"
 #include "src/convert_rows_to_json.hpp"
+#include "src/json.hpp"
 
 void print_json(std::ostream & out, webpp::model::row_list_type rows)
 {
@@ -79,7 +63,6 @@ void print_html(std::ostream & out, webpp::model::row_list_type rows)
 		"</html>\n";
 }
 
-#include "src/json.hpp"
 #include "src/json_parser.hpp"
 
 void json_extract
