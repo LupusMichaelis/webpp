@@ -10,7 +10,17 @@
 
 using namespace cgreen;
 
-Ensure(empty_object_is_wellformed)
+Describe(json);
+
+BeforeEach(json)
+{
+}
+
+AfterEach(json)
+{
+}
+
+Ensure(json, empty_object_is_wellformed)
 {
 	std::string s {"{}"};
 	std::stringstream in {s};
@@ -21,7 +31,7 @@ Ensure(empty_object_is_wellformed)
 	assert_that(dynamic_cast<webpp::json::object&>(*p_tree).properties().size(), is_equal_to(0));
 }
 
-Ensure(empty_array_is_wellformed)
+Ensure(json, empty_array_is_wellformed)
 {
 	std::string s {"[]"};
 	std::stringstream in {s};
@@ -32,7 +42,7 @@ Ensure(empty_array_is_wellformed)
 	assert_that(dynamic_cast<webpp::json::array&>(*p_tree).values().size(), is_equal_to(0));
 }
 
-Ensure(nested_array_is_wellformed)
+Ensure(json, nested_array_is_wellformed)
 {
 	std::string s {"[[]]"};
 	std::stringstream in {s};
@@ -48,7 +58,7 @@ Ensure(nested_array_is_wellformed)
 		, is_equal_to(0));
 }
 
-Ensure(array_with_null_is_wellformed)
+Ensure(json, array_with_null_is_wellformed)
 {
 	std::string s {"[null]"};
 	std::stringstream in {s};
@@ -62,7 +72,7 @@ Ensure(array_with_null_is_wellformed)
 	(void) dynamic_cast<webpp::json::null&>(*a.values()[0]);
 }
 
-Ensure(object_with_null_is_wellformed)
+Ensure(json, object_with_null_is_wellformed)
 {
 	std::string s {"{\"null\":null}"};
 	std::stringstream in {s};
@@ -79,7 +89,7 @@ Ensure(object_with_null_is_wellformed)
 	(void) dynamic_cast<webpp::json::null&>(*e->second);
 }
 
-Ensure(array_number_empty_array_is_wellformed)
+Ensure(json, array_number_empty_array_is_wellformed)
 {
 	std::string s {"[1,[]]"};
 	std::stringstream in {s};
@@ -98,7 +108,7 @@ Ensure(array_number_empty_array_is_wellformed)
 	assert_that(e2.values().size(), is_equal_to(0));
 }
 
-Ensure(object_complex_wellformed)
+Ensure(json, object_complex_wellformed)
 {
 	std::string s {"{ \"array\": [1, \"rho\", 3, null, true, false, { \"boom\": 5, \"bam\": 2}] }"};
 	std::stringstream in {s};
@@ -110,7 +120,7 @@ Ensure(object_complex_wellformed)
 	// TODO add more assertion on the elements
 }
 
-Ensure(array_contains_number)
+Ensure(json, array_contains_number)
 {
 	for(auto literal:
 		{ "[1.2]"
@@ -140,7 +150,7 @@ Ensure(array_contains_number)
 	}
 }
 
-Ensure(literal_is_badformed)
+Ensure(json, literal_is_badformed)
 {
 	std::vector<std::string> badformed { "{{}"
 		, "["
@@ -164,7 +174,7 @@ Ensure(literal_is_badformed)
 	}
 }
 
-Ensure(parsed_equals_generated)
+Ensure(json, parsed_equals_generated)
 {
 	std::string original {"{\"first\":true}"};
 	std::stringstream in {original};
@@ -186,7 +196,7 @@ Ensure(parsed_equals_generated)
 	assert_that(generated.c_str(), is_equal_to_string(parsed.c_str()));
 }
 
-Ensure(parsed_equals_generated_with_holes)
+Ensure(json, parsed_equals_generated_with_holes)
 {
 	std::string original {"[null,2,null,[]]"};
 	std::stringstream in {original};
@@ -207,22 +217,4 @@ Ensure(parsed_equals_generated_with_holes)
 	std::string generated {dump_generated.str()};
 
 	assert_that(generated.c_str(), is_equal_to_string(parsed.c_str()));
-}
-
-TestSuite *our_tests()
-{
-	TestSuite *suite = create_test_suite();
-	add_test(suite, empty_array_is_wellformed);
-	add_test(suite, nested_array_is_wellformed);
-	add_test(suite, empty_object_is_wellformed);
-	add_test(suite, array_with_null_is_wellformed);
-	add_test(suite, object_with_null_is_wellformed);
-	add_test(suite, array_number_empty_array_is_wellformed);
-	add_test(suite, object_complex_wellformed);
-
-	add_test(suite, literal_is_badformed);
-	add_test(suite, parsed_equals_generated);
-	add_test(suite, parsed_equals_generated_with_holes);
-
-	return suite;
 }

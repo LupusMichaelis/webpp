@@ -49,7 +49,17 @@ class printer : public visitor
 
 using namespace cgreen;
 
-Ensure(null_object_is_null)
+Describe(mysql_var);
+
+BeforeEach(mysql_var)
+{
+}
+
+AfterEach(mysql_var)
+{
+}
+
+Ensure(mysql_var, null_object_is_null)
 {
 	webpp::mysql::string null;
 	assert_that(null == nullptr, is_true);
@@ -65,7 +75,7 @@ Ensure(null_object_is_null)
 	assert_that(extract.c_str(), is_equal_to_string("null"));
 }
 
-Ensure(visit_string)
+Ensure(mysql_var, visit_string)
 {
 	webpp::mysql::string my_subject;
 	assert_that(my_subject == nullptr, is_true);
@@ -86,13 +96,4 @@ Ensure(visit_string)
 	s >> extract;
 
 	assert_that(extract.c_str(), is_equal_to_string(subject.c_str()));
-}
-
-TestSuite *our_tests()
-{
-	TestSuite *suite = create_test_suite();
-	add_test(suite, null_object_is_null);
-	add_test(suite, visit_string);
-
-	return suite;
 }
