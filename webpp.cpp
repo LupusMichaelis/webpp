@@ -8,9 +8,8 @@
 #include <string>
 #include <type_traits>
 
-extern char ** environ;
-
 #include <boost/assign/std/map.hpp>
+#include <boost/algorithm/string.hpp>
 
 std::map<std::string, std::string> const make_header()
 {
@@ -31,6 +30,7 @@ std::map<std::string, std::string> const make_header()
 #include "src/model.hpp"
 #include "src/convert_rows_to_json.hpp"
 #include "src/json.hpp"
+#include "src/http_request.hpp"
 
 void print_json(std::ostream & out, webpp::model::row_list_type rows)
 {
@@ -93,12 +93,11 @@ int main()
 		std::cout << p.first << ":" << p.second << "\n";
 	std::cout << "\n";
 
-	auto environment = make_environment();
-	auto &method = environment["REQUEST_METHOD"];
-	auto &uri = environment["REQUEST_URI"];
+	webpp::http::request request;
+	webpp::http::from_cgi(request);
 
 	std::vector<std::string> segments;
-	boost::split(segments, uri, boost::is_any_of("/"));
+	boost::split(segments, request.uri(), boost::is_any_of("/"));
 
 	std::string table_name {segments[1]};
 
@@ -128,12 +127,12 @@ int main()
 	p_con->connect("localhost", "test", "test", "test", 3308);
 	m.connection(p_con);
 
-	if("GET" == method)
+	if("GET" == request.method())
 	{
 		m.get_rows_by_criterias(p_rows, table_name, criterias);
 		print_json(std::cout, *p_rows);
 	}
-	else if("POST" == method)
+	else if("POST" == request.method())
 	{
 		std::unique_ptr<std::map<std::string, std::string>> p_changes;
 		json_extract(p_changes, std::cin);
@@ -146,12 +145,12 @@ int main()
 
 		m.update_rows(table_name, *p_changes, criterias);
 	}
-	else if("PUT" == method)
+	else if("PUT" == request.method())
 	{
 	}
 	else
 	{
-		throw boost::format("Unknown method '%s'") % method;
+		throw boost::format("Unknown method '%s'") % request.method();
 	}
 
 
