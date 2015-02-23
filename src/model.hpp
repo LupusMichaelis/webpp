@@ -24,8 +24,6 @@ class model
 	std::unique_ptr<impl> mp_impl;
 
 	public:
-		typedef std::map<std::string, std::string>	criteria_type;
-
 		typedef std::map<std::string, std::shared_ptr<mysql::var>>
 													row_type;
 		typedef std::vector<row_type>				row_list_type;
@@ -36,13 +34,19 @@ class model
 
 		void connection(std::shared_ptr<mysql::connection> p_connection);
 
-		void get_rows_by_criterias(std::unique_ptr<row_list_type> & rows
+		void get_by_criterias(std::unique_ptr<row_list_type> & rows
 			, std::string table_name
-			, criteria_type criterias
+			, row_type criterias
 			);
-		bool update_rows(std::string table_name
-				, criteria_type set_criterias
-				, criteria_type where_criterias
+		bool update(std::string table_name
+				, row_type set_criterias
+				, row_type where_criterias
+				);
+		bool insert(std::string table_name
+				, row_list_type rows
+				);
+		bool replace(std::string table_name
+				, row_type row
 				);
 };
 

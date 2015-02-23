@@ -66,7 +66,7 @@ void print_html(std::ostream & out, webpp::model::row_list_type rows)
 #include "src/json_parser.hpp"
 
 void json_extract
-	( std::unique_ptr<std::map<std::string, std::string>> & p_changes
+	( std::unique_ptr<std::map<std::string, std::shared_ptr<webpp::mysql::var>>> & p_changes
 	, std::istream & in
 	)
 {
@@ -77,9 +77,11 @@ void json_extract
 
 	for(auto & property: dynamic_cast<webpp::json::object &>(*p_tree).properties())
 	{
+		// TODO visitor to convert json to mysql
 		auto & value = dynamic_cast<webpp::json::string &>(*property.second).get();
+		auto p_mysql_var = std::make_shared<webpp::mysql::string>(value);
 
-		p_out->insert(std::make_pair(property.first, value));
+		p_out->insert(std::make_pair(property.first, p_mysql_var));
 	}
 
 	std::swap(p_out, p_changes);
@@ -102,7 +104,7 @@ int main()
 	std::string table_name {segments[1]};
 
 	std::string criteria;
-	std::map<std::string, std::string> criterias;
+	webpp::model::row_type criterias;
 
 	if(segments.size() > 2)
 	{
@@ -113,9 +115,8 @@ int main()
 		auto match_options = boost::match_perl;
 		if(boost::regex_match(criteria, results, re, match_options))
 		{
-			webpp::model::criteria_type::value_type criteria
-				{ {results[1].first, results[1].second }
-				, { results[2].first, results[2].second } };
+			std::shared_ptr<webpp::mysql::var> p_var { std::make_shared<webpp::mysql::string>(std::string {results[2].first, results[2].second}) };
+			webpp::model::row_type::value_type criteria { {results[1].first, results[1].second }, p_var };
 			criterias.insert(criteria);
 		}
 	}
@@ -129,24 +130,28 @@ int main()
 
 	if("GET" == request.method())
 	{
-		m.get_rows_by_criterias(p_rows, table_name, criterias);
+		m.get_by_criterias(p_rows, table_name, criterias);
 		print_json(std::cout, *p_rows);
 	}
 	else if("POST" == request.method())
 	{
-		std::unique_ptr<std::map<std::string, std::string>> p_changes;
+		std::unique_ptr<webpp::model::row_type> p_changes;
 		json_extract(p_changes, std::cin);
 
-		m.get_rows_by_criterias(p_rows, table_name, criterias);
+		m.get_by_criterias(p_rows, table_name, criterias);
 		for(auto row: *p_rows)
 		{
-
+			// TODO: change MySQL vars from JSON
 		}
 
-		m.update_rows(table_name, *p_changes, criterias);
+		m.update(table_name, *p_changes, criterias);
 	}
 	else if("PUT" == request.method())
 	{
+		std::unique_ptr<webpp::model::row_type> p_changes;
+		json_extract(p_changes, std::cin);
+
+		m.replace(table_name, *p_changes);
 	}
 	else
 	{
