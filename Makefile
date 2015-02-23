@@ -44,14 +44,15 @@ SRCDIR=src
 SRCS=$(addprefix $(SRCDIR)/, $(CPPFILES))
 OBJS=$(SRCS:.cpp=.o)
 
-.PHONY: target tests all $(TESTS)
 TARGET=webpp
 TESTS= \
+	   test_model \
 	   test_router \
 	   test_json \
 	   test_url \
 	   test_mysql_var \
 
+.PHONY: target tests all $(TESTS)
 all: tests target
 
 ########################################################################
@@ -114,6 +115,16 @@ tests/test_json.so: src/json_parser.o src/json.o tests/test_json.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -fPIC
 
 tests/test_json.o: tests/test_json.cpp
+	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
+
+# Model test ###########################################################
+test_model: tests/test_model.so
+	cgreen-runner $^
+
+tests/test_model.so: src/model.o src/json.o src/json_parser.o src/mysql_connection.o src/mysql_result.o src/mysql_var.o tests/test_model.o
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(TESTLDFLAGS) -fPIC
+
+tests/test_model.o: tests/test_model.cpp
 	$(CXX) -o $@ -c $^ $(TESTCXXFLAGS)
 
 ########################################################################
