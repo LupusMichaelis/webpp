@@ -10,6 +10,7 @@ CXXFLAGS += \
 		-I$(HOME)/.local/include/ \
 
 TESTS= \
+	   $(TESTDIR)/test_query \
 	   $(TESTDIR)/test_model \
 	   $(TESTDIR)/test_router \
 	   $(TESTDIR)/test_json \
@@ -19,6 +20,13 @@ TESTS= \
 .PHONY: all
 
 all: $(TESTS)
+
+# Query test ###########################################################
+tests/test_query: tests/test_query.so
+	cgreen-runner $^
+
+tests/test_query.so: src/query.o tests/test_query.o
+	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(LDFLAGS) -fPIC
 
 # HTTP input request ###################################################
 tests/test_http_request: tests/test_http_request.so
