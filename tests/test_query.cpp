@@ -17,9 +17,10 @@ AfterEach(query)
 
 Ensure(query, select_from_where_and_there)
 {
-	webpp::query::builder builder;
+	webpp::query::escaper const escaper;
+	webpp::query::builder const builder {escaper};
 
-	auto query = builder
+	webpp::query::query query = builder
 		.select({"id", "name"})
 		.from("peoples")
 		.where("id", "1")
@@ -32,5 +33,25 @@ Ensure(query, select_from_where_and_there)
 				"select `id`, `name` from `peoples`"
 				" where `id` = 1"
 				" and `is_active` = true"
+				));
+}
+
+Ensure(query, insert_into_table_values)
+{
+	webpp::query::escaper const escaper;
+	webpp::query::builder const builder {escaper};
+
+	webpp::query::query query = builder
+		.insert("peoples", {"name"})
+		.values({{"Mickael"}, {"Ania"}, {"Dagmara"}})
+		;
+
+	auto literal = query.str();
+	assert_that(literal.c_str(),
+			is_equal_to_string(
+				"insert into `peoples`"
+				" (`name`)"
+				" values"
+				" (\"Mickael\"), (\"Ania\"), (\"Dagmara\")"
 				));
 }

@@ -6,6 +6,7 @@ CPPFILES= \
 	  url.cpp \
 	  json_parser.cpp \
 	  json.cpp \
+	  query.cpp \
 	  mysql_var.cpp \
 	  mysql_result.cpp \
 	  convert_rows_to_json.cpp \

@@ -8,19 +8,169 @@
 namespace webpp {
 namespace query {
 
+struct builder::impl
+{
+	escaper const & m_escaper;
+	std::vector<std::shared_ptr<clause::base>> m_clause_list;
+
+	impl(escaper const & e)
+		: m_escaper(e)
+		, m_clause_list()
+	{ }
+
+	impl(impl const & copied)
+		: m_escaper(copied.m_escaper)
+		, m_clause_list()
+	{
+		std::transform(copied.m_clause_list.cbegin()
+			, copied.m_clause_list.cend()
+			, std::back_inserter(m_clause_list)
+			, [] (std::shared_ptr<clause::base> const & p_value)
+				-> std::shared_ptr<clause::base>
+				{
+					std::unique_ptr<clause::base> p_cloned;
+					p_value->clone(p_cloned);
+					return std::move(p_cloned);
+				}
+			);
+	};
+};
+
+builder::builder(builder const & copied)
+	: mp_impl {std::make_unique<impl>(*copied.mp_impl)}
+{
+}
+
+builder::builder(escaper const & e)
+	: mp_impl {std::make_unique<impl>(e)}
+{
+}
+
+builder::~builder()
+{
+};
+
+builder::operator query() const
+{
+	query q{mp_impl->m_escaper};
+	std::for_each(mp_impl->m_clause_list.cbegin()
+		, mp_impl->m_clause_list.cend()
+		, std::ref(q));
+	return q;
+}
+
+builder builder::fields(std::vector<std::string> field_list, bool parenthesis/* = false*/) const
+{
+	builder copy{*this};
+	return copy.fields(field_list, parenthesis);
+}
+
+builder & builder::fields(std::vector<std::string> field_list, bool parenthesis/* = false*/)
+{
+	auto p_clause = std::make_shared<clause::fields>(field_list, parenthesis);
+	mp_impl->m_clause_list.push_back(p_clause);
+
+	return *this;
+}
+
+builder builder::select(std::vector<std::string> field_list) const
+{
+	builder copy{*this};
+	return copy.select(field_list);
+}
+
+builder builder::insert(std::string table_name, std::vector<std::string> field_list) const
+{
+	builder copy{*this};
+	return copy.insert(table_name, field_list);
+}
+
+builder builder::from(std::string table_name) const
+{
+	builder copy{*this};
+	return copy.from(table_name);
+}
+
+builder builder::where(std::string field_name, std::string field_value) const
+{
+	builder copy{*this};
+	return copy.where(field_name, field_value);
+}
+
+builder builder::and_(std::string field_name, std::string field_value) const
+{
+	builder copy{*this};
+	return copy.and_(field_name, field_value);
+}
+
+builder builder::values(std::vector<std::vector<std::string>> value_list) const
+{
+	builder copy{*this};
+	return copy.values(value_list);
+}
+
+builder & builder::select(std::vector<std::string> field_list)
+{
+	auto p_clause = std::make_shared<clause::select>();
+	if(mp_impl->m_clause_list.size())
+		p_clause->verify(*mp_impl->m_clause_list.back());
+	mp_impl->m_clause_list.push_back(p_clause);
+
+	fields(field_list);
+
+	return *this;
+}
+
+builder & builder::insert(std::string table_name, std::vector<std::string> field_list)
+{
+	auto p_clause = std::make_shared<clause::insert>(table_name, field_list);
+	mp_impl->m_clause_list.push_back(p_clause);
+	fields(field_list, true);
+
+	return *this;
+}
+
+builder & builder::from(std::string table_name)
+{
+	auto p_clause = std::make_shared<clause::from>(table_name);
+	mp_impl->m_clause_list.push_back(p_clause);
+
+	return *this;
+}
+
+builder & builder::where(std::string field_name, std::string field_value)
+{
+	auto p_clause = std::make_shared<clause::where>(field_name, field_value);
+	mp_impl->m_clause_list.push_back(p_clause);
+
+	return *this;
+}
+
+builder & builder::and_(std::string field_name, std::string field_value)
+{
+	auto p_clause = std::make_shared<clause::and_>(field_name, field_value);
+	mp_impl->m_clause_list.push_back(p_clause);
+
+	return *this;
+}
+
+builder & builder::values(std::vector<std::vector<std::string>> value_list)
+{
+	auto p_clause = std::make_shared<clause::values>(value_list);
+	mp_impl->m_clause_list.push_back(p_clause);
+
+	return *this;
+}
+
 struct query::impl
 {
 	escaper const & m_escaper;
 
-	std::string m_table_name;
-	std::vector<std::string> m_field_list;
-	std::map<std::string, std::string> m_where_list;
+	std::string m_literal;
 
 	impl(impl const & rhs)
 		: m_escaper(rhs.m_escaper)
-		, m_table_name {rhs.m_table_name}
-		, m_field_list {rhs.m_field_list}
-		, m_where_list {rhs.m_where_list}
+		, m_literal(rhs.m_literal)
 	{ }
 
 	impl(escaper const & e)
@@ -38,43 +188,26 @@ query::query(query const & rhs)
 {
 }
 
-query query::select(std::vector<std::string> field_list) const
+void query::operator() (std::shared_ptr<clause::base> const & p_clause)
 {
-	query copy{*this};
-	copy.mp_impl->m_field_list = field_list;
-
-	return copy;
+	operator() (*p_clause);
 }
 
-query query::from(std::string table_name) const
+void query::operator() (clause::base & clause)
 {
-	query copy{*this};
-	copy.mp_impl->m_table_name = table_name;
-
-	return copy;
+	clause.accept(*this);
 }
 
-query query::where(std::string field_name, std::string field_value) const
+void query::visit(clause::select & clause)
 {
-	query copy{*this};
-	copy.mp_impl->m_where_list.insert({field_name, field_value});
-
-	return copy;
+	mp_impl->m_literal = "select";
 }
 
-query query::and_(std::string field_name, std::string field_value) const
-{
-	if(!mp_impl->m_where_list.size())
-		throw "";
-
-	return where(field_name, field_value);
-}
-
-std::string const query::str() const
+void query::visit(clause::fields & clause)
 {
 	std::vector<std::string> field_list;
-	std::transform(mp_impl->m_field_list.cbegin()
-		, mp_impl->m_field_list.cend()
+	std::transform(clause.field_list().cbegin()
+		, clause.field_list().cend()
 		, std::back_inserter(field_list)
 		, [] (std::string const & value) -> std::string const
 			{
@@ -82,51 +215,66 @@ std::string const query::str() const
 			}
 		);
 	auto field_list_literal = boost::algorithm::join(field_list, ", ");
-	std::string literal = (boost::format("select %s from `%s`")
-			% field_list_literal
-			% mp_impl->m_table_name).str();
+	if(clause.parenthesis())
+		field_list_literal = "(" + field_list_literal + ")";
 
-			//mysql_to_string converter;
-			//std::string converted;
-			//converter.convert(converted, *criteria.second);
-	std::vector<std::string> buffer;
-	std::transform(mp_impl->m_where_list.cbegin()
-			, mp_impl->m_where_list.cend()
-			, std::back_inserter(buffer)
-			, [] (std::pair<std::string, std::string> const & criteria) -> std::string const
+	mp_impl->m_literal += " " + field_list_literal;
+}
+
+
+void query::visit(clause::from & clause)
+{
+	mp_impl->m_literal += (boost::format(" from `%s`") % clause.table_name()).str();
+}
+
+void query::visit(clause::where & clause)
+{
+	mp_impl->m_literal += (boost::format(" where `%s` = %s") % clause.lhs() % clause.rhs()).str();
+}
+
+void query::visit(clause::and_ & clause)
+{
+	mp_impl->m_literal += (boost::format(" and `%s` = %s") % clause.lhs() % clause.rhs()).str();
+}
+
+void query::visit(clause::insert & clause)
+{
+	mp_impl->m_literal = "insert into `" + clause.table_name()  + "`";
+}
+
+void query::visit(clause::values & clause)
+{
+	std::vector<std::string> value_row_list;
+	for(auto value_row: clause.value_list())
+	{
+		std::vector<std::string> value_list;
+
+		std::transform(value_row.cbegin()
+			, value_row.cend()
+			, std::back_inserter(value_list)
+			, [] (std::string const & value) -> std::string const
 				{
-					return (boost::format("`%s` = %s") % criteria.first % criteria.second).str();
+					return "\"" + value  + "\"";
 				}
 			);
+		value_row_list.push_back("(" + boost::algorithm::join(value_list, ", ") + ")");
+	}
 
-	literal += " where " + boost::algorithm::join(buffer, " and ");
+	auto field_list_literal = boost::algorithm::join(value_row_list, ", ");
 
-	return literal;
+	mp_impl->m_literal += " values " + field_list_literal;
+}
+
+std::string const query::str() const
+{
+	return mp_impl->m_literal;
 }
 
 query::~query()
 {
 }
 
-struct builder::impl
-{
-	escaper m_escaper;
-};
 
-builder::builder()
-	: mp_impl {std::make_unique<builder::impl>()}
-{
-}
 
-query builder::select(std::vector<std::string> field_list) const
-{
-	query q{mp_impl->m_escaper};
-
-	return q.select(field_list);
-}
-
-builder::~builder()
-{
-};
 
 }} // namespace webpp::query
