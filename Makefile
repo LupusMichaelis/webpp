@@ -8,7 +8,7 @@ CPPFILES= \
 	  json.cpp \
 	  query_clause.cpp \
 	  query.cpp \
-	  mysql_var.cpp \
+	  query_var.cpp \
 	  mysql_result.cpp \
 	  convert_rows_to_json.cpp \
 	  mysql_connection.cpp \

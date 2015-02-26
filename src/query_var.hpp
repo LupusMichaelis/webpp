@@ -8,7 +8,7 @@
  * \todo the operator == algorithm is flawed, need to review the logic
  */
 
-namespace webpp { namespace mysql {
+namespace webpp { namespace query {
 
 class boolean;
 class integer;
@@ -134,27 +134,27 @@ class boolean : public var
 		virtual ~boolean();
 };
 
-} } // namespace webpp::mysql
+} } // namespace webpp::query
 
-inline bool operator !=(webpp::mysql::var const & lhs, std::nullptr_t)
+inline bool operator !=(webpp::query::var const & lhs, std::nullptr_t)
 {
 	return !(lhs == nullptr);
 }
 
-inline bool operator !=(std::nullptr_t, webpp::mysql::var const & rhs)
+inline bool operator !=(std::nullptr_t, webpp::query::var const & rhs)
 {
 	return rhs != nullptr;
 }
 
-inline bool operator ==(std::nullptr_t, webpp::mysql::var const & rhs)
+inline bool operator ==(std::nullptr_t, webpp::query::var const & rhs)
 {
 	return rhs == nullptr;
 }
 
-inline bool operator ==(std::string const & lhs, webpp::mysql::var const & rhs)
+inline bool operator ==(std::string const & lhs, webpp::query::var const & rhs)
 {
-	// XXX the dynamic_cast avoid the cast issue when rhs is webpp::mysql::string
-	return dynamic_cast<webpp::mysql::string const &>(rhs).get() == lhs;
+	// XXX the dynamic_cast avoid the cast issue when rhs is webpp::query::string
+	return dynamic_cast<webpp::query::string const &>(rhs).get() == lhs;
 }
 
 #endif // HPP_MYSQL_VAR

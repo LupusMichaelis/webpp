@@ -66,7 +66,7 @@ void print_html(std::ostream & out, webpp::model::row_list_type rows)
 #include "src/json_parser.hpp"
 
 void json_extract
-	( std::unique_ptr<std::map<std::string, std::shared_ptr<webpp::mysql::var>>> & p_changes
+	( std::unique_ptr<std::map<std::string, std::shared_ptr<webpp::query::var>>> & p_changes
 	, std::istream & in
 	)
 {
@@ -115,7 +115,7 @@ int main()
 		auto match_options = boost::match_perl;
 		if(boost::regex_match(criteria, results, re, match_options))
 		{
-			std::shared_ptr<webpp::mysql::var> p_var { std::make_shared<webpp::mysql::string>(std::string {results[2].first, results[2].second}) };
+			std::shared_ptr<webpp::query::var> p_var { std::make_shared<webpp::mysql::string>(std::string {results[2].first, results[2].second}) };
 			webpp::model::row_type::value_type criteria { {results[1].first, results[1].second }, p_var };
 			criterias.insert(criteria);
 		}

@@ -1,5 +1,5 @@
 
-#include "mysql_var.hpp"
+#include "query_var.hpp"
 #include "memory.hpp"
 
 #include <string>
@@ -7,7 +7,7 @@
 #include <stdexcept>
 #include <iostream>
 
-namespace webpp { namespace mysql {
+namespace webpp { namespace query {
 
 visitor::~visitor()
 {
@@ -193,4 +193,4 @@ integer::~integer()
 {
 }
 
-} } // namespace webpp::mysql
+} } // namespace webpp::query

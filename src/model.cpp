@@ -6,11 +6,12 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/join.hpp>
 
-#include "mysql_var.hpp"
+#include "query.hpp"
 
 namespace webpp {
 
-class mysql_to_string: public mysql::visitor
+class mysql_to_string:
+	public query::visitor
 {
 	std::string m_yielded;
 
@@ -20,15 +21,14 @@ class mysql_to_string: public mysql::visitor
 	}
 
 	public:
-
-		void convert(std::string & out, mysql::var & var)
+		void convert(std::string & out, query::var & var)
 		{
 			m_yielded = "";
 			var.accept(*this);
 			out = m_yielded;
 		}
 
-		virtual void visit(mysql::boolean & v)
+		virtual void visit(query::boolean & v)
 		{
 			if(nullptr == v)
 				yield_null();
@@ -38,7 +38,7 @@ class mysql_to_string: public mysql::visitor
 				m_yielded = "FALSE";
 		}
 
-		virtual void visit(mysql::integer & v)
+		virtual void visit(query::integer & v)
 		{
 			if(nullptr == v)
 				yield_null();
@@ -46,7 +46,7 @@ class mysql_to_string: public mysql::visitor
 				m_yielded = v.get();
 		}
 
-		virtual void visit(mysql::string & v)
+		virtual void visit(query::string & v)
 		{
 			if(nullptr == v)
 				yield_null();
@@ -158,6 +158,8 @@ bool model::update(std::string table_name
 		, row_type where_criterias
 		)
 {
+	webpp::query::query query;
+
 	std::string query {(boost::format("update `%s`") % table_name).str()};
 
 	{

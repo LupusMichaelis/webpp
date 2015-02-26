@@ -2,7 +2,7 @@
 #	define HPP_RESULT_MYSQL_WEBPP
 
 #	include "memory.hpp"
-#	include "mysql_var.hpp"
+#	include "query_var.hpp"
 
 #	include <vector>
 #	include <map>
@@ -17,7 +17,7 @@ class result
 	std::unique_ptr<impl> mp_impl;
 
 	public:
-		typedef std::map<std::string, std::shared_ptr<var>>
+		typedef std::map<std::string, std::shared_ptr<query::var>>
 											row_type;
 		typedef std::vector<row_type>		row_list_type;
 		typedef std::vector<std::pair<std::string, enum enum_field_types>>

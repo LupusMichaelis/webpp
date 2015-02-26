@@ -1,7 +1,9 @@
 
 #include "mysql_connection.hpp"
 #include "mysql_result.hpp"
-#include "mysql_var.hpp"
+#include "query_var.hpp"
+
+#include "query.hpp"
 
 #include <mysql.h>
 #include <cstdlib>
@@ -85,7 +87,7 @@ void connection::query(std::unique_ptr<result> & p_result, std::string const que
 				enum enum_field_types const & field_type {field_list[row_idx].second};
 
 				if(NULL == row[row_idx])
-					row_[field_name] = std::make_shared<string>();
+					row_[field_name] = std::make_shared<query::string>();
 				else
 					switch(field_type)
 					{
@@ -95,10 +97,10 @@ void connection::query(std::unique_ptr<result> & p_result, std::string const que
 						case MYSQL_TYPE_LONG:
 						case MYSQL_TYPE_LONGLONG:
 						case MYSQL_TYPE_INT24:
-							row_[field_name] = std::make_shared<integer>(row[row_idx]);
+							row_[field_name] = std::make_shared<query::integer>(row[row_idx]);
 							break;
 						case MYSQL_TYPE_NULL:
-							row_[field_name] = std::make_shared<string>();
+							row_[field_name] = std::make_shared<query::string>();
 							break;
 
 						// MYSQL_TYPE_FLOAT
@@ -112,7 +114,7 @@ void connection::query(std::unique_ptr<result> & p_result, std::string const que
 						// MYSQL_TYPE_VARCHAR
 						// MYSQL_TYPE_BIT
 						default:
-							row_[field_name] = std::make_shared<string>(row[row_idx]);
+							row_[field_name] = std::make_shared<query::string>(row[row_idx]);
 					}
 			}
 

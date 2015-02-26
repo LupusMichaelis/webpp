@@ -1,10 +1,13 @@
 #ifndef  HPP_JSON_MY_WEBPP
 #	define  HPP_JSON_MY_WEBPP
 
-#	include "mysql_var.hpp"
-
 namespace webpp
 {
+
+namespace query
+{
+	class var;
+}
 
 namespace json {
 
@@ -21,7 +24,7 @@ class convert_mysql_to_json
 	public:
 		convert_mysql_to_json();
 
-		void convert(std::unique_ptr<json::value> & p_jv, mysql::var & v);
+		void convert(std::unique_ptr<json::value> & p_jv, query::var & v);
 		void yield_null();
 
 		virtual void visit(mysql::boolean & v);

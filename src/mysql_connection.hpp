@@ -3,6 +3,10 @@
 
 #	include "memory.hpp"
 
+namespace webpp { namespace query {
+class query;
+}}; // webpp::query
+
 namespace webpp { namespace mysql {
 
 class result;

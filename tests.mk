@@ -15,7 +15,7 @@ TESTS= \
 	   $(TESTDIR)/test_router \
 	   $(TESTDIR)/test_json \
 	   $(TESTDIR)/test_url \
-	   $(TESTDIR)/test_mysql_var \
+	   $(TESTDIR)/test_query_var \
 
 UNITTESTER=cgreen-runner --colours
 
@@ -52,10 +52,10 @@ tests/test_url.so: src/url.o tests/test_url.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(LDFLAGS) -fPIC
 
 # MySQL Variable tests #################################################
-tests/test_mysql_var: tests/test_mysql_var.so
+tests/test_query_var: tests/test_query_var.so
 	$(UNITTESTER) $^
 
-tests/test_mysql_var.so: src/mysql_var.o tests/test_mysql_var.o
+tests/test_query_var.so: src/query_var.o tests/test_query_var.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(LDFLAGS) -fPIC
 
 # JSON parser tests ####################################################
@@ -69,7 +69,7 @@ tests/test_json.so: src/json_parser.o src/json.o tests/test_json.o
 tests/test_model: tests/test_model.so
 	$(UNITTESTER) $^
 
-tests/test_model.so: src/model.o src/json.o src/json_parser.o src/mysql_connection.o src/mysql_result.o src/mysql_var.o tests/test_model.o
+tests/test_model.so: src/model.o src/json.o src/json_parser.o src/mysql_connection.o src/mysql_result.o src/query_var.o tests/test_model.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(LDFLAGS) -fPIC
 
 %.o: %.cpp

@@ -1,6 +1,6 @@
 
 #include "json.hpp"
-#include "mysql_var.hpp"
+#include "query_var.hpp"
 #include "mysql_result.hpp"
 #include "convert_rows_to_json.hpp"
 
@@ -11,7 +11,7 @@ convert_mysql_to_json::convert_mysql_to_json()
 {
 }
 
-void convert_mysql_to_json::convert(std::unique_ptr<json::value> & p_jv, mysql::var & v)
+void convert_mysql_to_json::convert(std::unique_ptr<json::value> & p_jv, query::var & v)
 {
 	v.accept(*this);
 	std::swap(mp_yield, p_jv);

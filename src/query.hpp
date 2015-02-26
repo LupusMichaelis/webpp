@@ -17,11 +17,6 @@ class escaper
 		escaper() {};
 };
 
-
-
-
-
-
 class query
 	: public clause::visitor
 {
