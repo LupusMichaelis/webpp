@@ -325,7 +325,7 @@ void query::visit(clause::and_ & clause)
 
 void query::visit(clause::insert & clause)
 {
-	mp_impl->m_literal = "insert into `" + clause.table_name()  + "`";
+	mp_impl->m_literal = "insert `" + clause.table_name()  + "`";
 }
 
 void query::visit(clause::values & clause)

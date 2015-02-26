@@ -49,7 +49,7 @@ Ensure(query, insert_into_table_values)
 	auto literal = query.str();
 	assert_that(literal.c_str(),
 			is_equal_to_string(
-				"insert into `familly`"
+				"insert `familly`"
 				" (`name`)"
 				" values"
 				" (\"Mickael\"), (\"Ania\"), (\"Dagmara\")"
