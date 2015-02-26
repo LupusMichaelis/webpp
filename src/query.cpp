@@ -109,12 +109,30 @@ builder builder::values(std::vector<std::vector<std::string>> value_list) const
 	return copy.values(value_list);
 }
 
+template <typename clause_type>
+void builder::verify_clause_is_allowed(clause_type & clause)
+{
+	if(mp_impl->m_clause_list.size())
+	{
+		clause::checker<clause_type> checker{clause};
+		checker.check(*mp_impl->m_clause_list.back());
+
+		if(!checker)
+			throw "Boom";
+	}
+}
+
+template <typename clause_type>
+void builder::push_clause(std::shared_ptr<clause_type> const & p_clause)
+{
+	verify_clause_is_allowed<clause_type>(*p_clause);
+	mp_impl->m_clause_list.push_back(p_clause);
+}
+
 builder & builder::select(std::vector<std::string> field_list)
 {
 	auto p_clause = std::make_shared<clause::select>();
-	if(mp_impl->m_clause_list.size())
-		p_clause->verify(*mp_impl->m_clause_list.back());
-	mp_impl->m_clause_list.push_back(p_clause);
+	push_clause(p_clause);
 
 	fields(field_list);
 
@@ -124,7 +142,7 @@ builder & builder::select(std::vector<std::string> field_list)
 builder & builder::insert(std::string table_name, std::vector<std::string> field_list)
 {
 	auto p_clause = std::make_shared<clause::insert>(table_name, field_list);
-	mp_impl->m_clause_list.push_back(p_clause);
+	push_clause(p_clause);
 	fields(field_list, true);
 
 	return *this;
@@ -133,7 +151,7 @@ builder & builder::insert(std::string table_name, std::vector<std::string> field
 builder & builder::from(std::string table_name)
 {
 	auto p_clause = std::make_shared<clause::from>(table_name);
-	mp_impl->m_clause_list.push_back(p_clause);
+	push_clause(p_clause);
 
 	return *this;
 }
@@ -141,7 +159,7 @@ builder & builder::from(std::string table_name)
 builder & builder::where(std::string field_name, std::string field_value)
 {
 	auto p_clause = std::make_shared<clause::where>(field_name, field_value);
-	mp_impl->m_clause_list.push_back(p_clause);
+	push_clause(p_clause);
 
 	return *this;
 }
@@ -149,7 +167,7 @@ builder & builder::where(std::string field_name, std::string field_value)
 builder & builder::and_(std::string field_name, std::string field_value)
 {
 	auto p_clause = std::make_shared<clause::and_>(field_name, field_value);
-	mp_impl->m_clause_list.push_back(p_clause);
+	push_clause(p_clause);
 
 	return *this;
 }
@@ -157,10 +175,45 @@ builder & builder::and_(std::string field_name, std::string field_value)
 builder & builder::values(std::vector<std::vector<std::string>> value_list)
 {
 	auto p_clause = std::make_shared<clause::values>(value_list);
-	mp_impl->m_clause_list.push_back(p_clause);
+	push_clause(p_clause);
 
 	return *this;
 }
+
+template
+void builder::verify_clause_is_allowed<clause::select>(clause::select & clause);
+template
+void builder::push_clause<clause::select>(std::shared_ptr<clause::select> const & p_clause);
+
+template
+void builder::verify_clause_is_allowed<clause::fields>(clause::fields & clause);
+template
+void builder::push_clause<clause::fields>(std::shared_ptr<clause::fields> const & p_clause);
+
+template
+void builder::verify_clause_is_allowed<clause::insert>(clause::insert & clause);
+template
+void builder::push_clause<clause::insert>(std::shared_ptr<clause::insert> const & p_clause);
+
+template
+void builder::verify_clause_is_allowed<clause::from>(clause::from & clause);
+template
+void builder::push_clause<clause::from>(std::shared_ptr<clause::from> const & p_clause);
+
+template
+void builder::verify_clause_is_allowed<clause::where>(clause::where & clause);
+template
+void builder::push_clause<clause::where>(std::shared_ptr<clause::where> const & p_clause);
+
+template
+void builder::verify_clause_is_allowed<clause::and_>(clause::and_ & clause);
+template
+void builder::push_clause<clause::and_>(std::shared_ptr<clause::and_> const & p_clause);
+
+template
+void builder::verify_clause_is_allowed<clause::values>(clause::values & clause);
+template
+void builder::push_clause<clause::values>(std::shared_ptr<clause::values> const & p_clause);
 
 struct query::impl
 {

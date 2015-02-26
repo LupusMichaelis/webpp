@@ -25,7 +25,7 @@ all: $(TESTS)
 tests/test_query: tests/test_query.so
 	cgreen-runner $^
 
-tests/test_query.so: src/query.o tests/test_query.o
+tests/test_query.so: src/query.o src/query_clause.o tests/test_query.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(LDFLAGS) -fPIC
 
 # HTTP input request ###################################################
