@@ -85,6 +85,12 @@ builder builder::insert(std::string table_name, std::vector<std::string> field_l
 	return copy.insert(table_name, field_list);
 }
 
+builder builder::update(std::string table_name) const
+{
+	builder copy{*this};
+	return copy.update(table_name);
+}
+
 builder builder::from(std::string table_name) const
 {
 	builder copy{*this};
@@ -107,6 +113,12 @@ builder builder::values(std::vector<std::vector<std::string>> value_list) const
 {
 	builder copy{*this};
 	return copy.values(value_list);
+}
+
+builder builder::set(std::map<std::string, std::string> field_list) const
+{
+	builder copy{*this};
+	return copy.set(field_list);
 }
 
 template <typename clause_type>
@@ -148,6 +160,14 @@ builder & builder::insert(std::string table_name, std::vector<std::string> field
 	return *this;
 }
 
+builder & builder::update(std::string table_name)
+{
+	auto p_clause = std::make_shared<clause::update>(table_name);
+	push_clause(p_clause);
+
+	return *this;
+}
+
 builder & builder::from(std::string table_name)
 {
 	auto p_clause = std::make_shared<clause::from>(table_name);
@@ -175,6 +195,14 @@ builder & builder::and_(std::string field_name, std::string field_value)
 builder & builder::values(std::vector<std::vector<std::string>> value_list)
 {
 	auto p_clause = std::make_shared<clause::values>(value_list);
+	push_clause(p_clause);
+
+	return *this;
+}
+
+builder & builder::set(std::map<std::string, std::string> field_list)
+{
+	auto p_clause = std::make_shared<clause::set>(field_list);
 	push_clause(p_clause);
 
 	return *this;
@@ -214,6 +242,11 @@ template
 void builder::verify_clause_is_allowed<clause::values>(clause::values & clause);
 template
 void builder::push_clause<clause::values>(std::shared_ptr<clause::values> const & p_clause);
+
+template
+void builder::verify_clause_is_allowed<clause::set>(clause::set & clause);
+template
+void builder::push_clause<clause::set>(std::shared_ptr<clause::set> const & p_clause);
 
 struct query::impl
 {
@@ -318,6 +351,20 @@ void query::visit(clause::values & clause)
 	mp_impl->m_literal += " values " + field_list_literal;
 }
 
+void query::visit(clause::update & clause)
+{
+	mp_impl->m_literal = (boost::format("update `%s`") % clause.table_name()).str();
+}
+
+void query::visit(clause::set & clause)
+{
+	std::vector<std::string> buffer;
+	for(auto setter: clause.field_list())
+		buffer.push_back((boost::format("`%s` = %s") % setter.first % setter.second).str());
+
+	mp_impl->m_literal += " set " + boost::algorithm::join(buffer, ", ");
+}
+
 std::string const query::str() const
 {
 	return mp_impl->m_literal;
@@ -326,8 +373,5 @@ std::string const query::str() const
 query::~query()
 {
 }
-
-
-
 
 }} // namespace webpp::query

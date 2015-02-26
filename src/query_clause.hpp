@@ -25,6 +25,9 @@ class and_;
 
 class values;
 
+class update;
+class set;
+
 class visitor
 {
 	public:
@@ -35,6 +38,8 @@ class visitor
 		virtual void visit(where & clause) = 0;
 		virtual void visit(and_ & clause) = 0;
 		virtual void visit(values & clause) = 0;
+		virtual void visit(update & clause) = 0;
+		virtual void visit(set & clause) = 0;
 
 		virtual ~visitor() { };
 };
@@ -118,7 +123,7 @@ class from : public base
 	public:
 		explicit from(std::string table_name);
 
-		std::string const & table_name();
+		std::string const & table_name() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
@@ -132,8 +137,8 @@ class where : public base
 	public:
 		where(std::string lhs, std::string rhs);
 
-		std::string const & lhs();
-		std::string const & rhs();
+		std::string const & lhs() const;
+		std::string const & rhs() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
@@ -147,12 +152,41 @@ class and_ : public base
 	public:
 		and_(std::string lhs, std::string rhs);
 
-		std::string const & lhs();
-		std::string const & rhs();
+		std::string const & lhs() const;
+		std::string const & rhs() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~and_();
+};
+
+class update : public base
+{
+	std::string m_table;
+
+	public:
+		explicit update(std::string table);
+
+		std::string const & table_name() const;
+
+		virtual void clone(std::unique_ptr<base> & p_cloned);
+		virtual void accept(visitor & v);
+		virtual ~update();
+};
+
+class set : public base
+{
+	std::map<std::string, std::string> m_field_list;
+
+	public:
+		set(std::map<std::string, std::string> field_list);
+		set(std::string field_name, std::string value_name);
+
+		std::map<std::string, std::string> const & field_list();
+
+		virtual void clone(std::unique_ptr<base> & p_cloned);
+		virtual void accept(visitor & v);
+		virtual ~set();
 };
 
 template<> struct follows<select, fields> { static bool const value = true; };
@@ -163,6 +197,9 @@ template<> struct follows<and_, and_> { static bool const value = true; };
 
 template<> struct follows<insert, fields> { static bool const value = true; };
 template<> struct follows<fields, values> { static bool const value = true; };
+
+template<> struct follows<update, set> { static bool const value = true; };
+template<> struct follows<set, where> { static bool const value = true; };
 
 template<typename next_clause_type>
 class checker
@@ -183,45 +220,16 @@ class checker
 			, m_is_valid(false)
 		{ }
 
-		virtual void check(base & clause)
-		{
-			clause.accept(*this);
-		}
-
-		virtual void visit(select & clause)
-		{
-			visit<>(clause);
-		}
-
-		virtual void visit(insert & clause)
-		{
-			visit<>(clause);
-		}
-
-		virtual void visit(fields & clause)
-		{
-			visit<>(clause);
-		}
-
-		virtual void visit(from & clause)
-		{
-			visit<>(clause);
-		}
-
-		virtual void visit(where & clause)
-		{
-			visit<>(clause);
-		}
-
-		virtual void visit(and_ & clause)
-		{
-			visit<>(clause);
-		}
-
-		virtual void visit(values & clause)
-		{
-			visit<>(clause);
-		}
+		virtual void check(base & clause)		{ clause.accept(*this); }
+		virtual void visit(select & clause)		{ visit<>(clause); }
+		virtual void visit(insert & clause)		{ visit<>(clause); }
+		virtual void visit(fields & clause)		{ visit<>(clause); }
+		virtual void visit(from & clause)		{ visit<>(clause); }
+		virtual void visit(where & clause)		{ visit<>(clause); }
+		virtual void visit(and_ & clause)		{ visit<>(clause); }
+		virtual void visit(values & clause)		{ visit<>(clause); }
+		virtual void visit(update & clause)		{ visit<>(clause); }
+		virtual void visit(set & clause)		{ visit<>(clause); }
 
 		operator bool() { return m_is_valid; }
 };

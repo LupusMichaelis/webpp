@@ -122,7 +122,7 @@ from::from(std::string table_name)
 
 from::~from() {}
 
-std::string const & from::table_name()
+std::string const & from::table_name() const
 {
 	return m_table_name;
 }
@@ -145,12 +145,12 @@ where::where(std::string lhs, std::string rhs)
 
 where::~where() {}
 
-std::string const & where::lhs()
+std::string const & where::lhs() const
 {
 	return m_lhs;
 }
 
-std::string const & where::rhs()
+std::string const & where::rhs() const
 {
 	return m_rhs;
 }
@@ -173,12 +173,12 @@ and_::and_(std::string lhs, std::string rhs)
 
 and_::~and_() {}
 
-std::string const & and_::lhs()
+std::string const & and_::lhs() const
 {
 	return m_lhs;
 }
 
-std::string const & and_::rhs()
+std::string const & and_::rhs() const
 {
 	return m_rhs;
 }
@@ -192,6 +192,63 @@ void and_::clone(std::unique_ptr<base> & p_cloned)
 void and_::accept(visitor & v)
 {
 	v.visit(*this);
+}
+
+// update /////////////////////////////////////////////////////////////////////
+update::update(std::string table)
+	: m_table {table}
+{
+}
+
+std::string const & update::table_name() const
+{
+	return m_table;
+}
+
+void update::clone(std::unique_ptr<base> & p_cloned)
+{
+	std::unique_ptr<base> p_clonee = std::make_unique<update>(*this);
+	std::swap(p_cloned, p_clonee);
+}
+
+void update::accept(visitor & v)
+{
+	v.visit(*this);
+}
+
+update::~update()
+{
+}
+
+// set ////////////////////////////////////////////////////////////////////////
+set::set(std::map<std::string, std::string> field_list)
+	: m_field_list { field_list }
+{
+}
+
+set::set(std::string field_name, std::string value_name)
+	: set {{{field_name, value_name}}}
+{
+}
+
+std::map<std::string, std::string> const & set::field_list()
+{
+	return m_field_list;
+}
+
+void set::clone(std::unique_ptr<base> & p_cloned)
+{
+	std::unique_ptr<base> p_clonee = std::make_unique<set>(*this);
+	std::swap(p_cloned, p_clonee);
+}
+
+void set::accept(visitor & v)
+{
+	v.visit(*this);
+}
+
+set::~set()
+{
 }
 
 }}} // namespace webpp::query::clause

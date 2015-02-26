@@ -56,6 +56,26 @@ Ensure(query, insert_into_table_values)
 				));
 }
 
+Ensure(query, update)
+{
+	webpp::query::escaper const escaper;
+	webpp::query::builder const builder {escaper};
+
+	webpp::query::query query = builder
+		.update("peoples")
+		.set({{"is_enabled", "true"}})
+		.where("id", "2")
+		;
+
+	auto literal = query.str();
+	assert_that(literal.c_str(),
+			is_equal_to_string(
+				"update `peoples`"
+				" set `is_enabled` = true"
+				" where `id` = 2"
+				));
+}
+
 Ensure(query, visit_select_from_where_and_there)
 {
 	webpp::query::clause::select	select;
