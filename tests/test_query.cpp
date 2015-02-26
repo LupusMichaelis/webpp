@@ -56,6 +56,26 @@ Ensure(query, insert_into_table_values)
 				));
 }
 
+Ensure(query, replace)
+{
+	webpp::query::escaper const escaper;
+	webpp::query::builder const builder {escaper};
+
+	webpp::query::query query = builder
+		.replace("familly", {"name"})
+		.values({{"Mickael"}, {"Ania"}, {"Dagmara"}})
+		;
+
+	auto literal = query.str();
+	assert_that(literal.c_str(),
+			is_equal_to_string(
+				"replace `familly`"
+				" (`name`)"
+				" values"
+				" (\"Mickael\"), (\"Ania\"), (\"Dagmara\")"
+				));
+}
+
 Ensure(query, update)
 {
 	webpp::query::escaper const escaper;

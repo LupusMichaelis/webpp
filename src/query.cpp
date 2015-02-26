@@ -85,6 +85,12 @@ builder builder::insert(std::string table_name, std::vector<std::string> field_l
 	return copy.insert(table_name, field_list);
 }
 
+builder builder::replace(std::string table_name, std::vector<std::string> field_list) const
+{
+	builder copy{*this};
+	return copy.replace(table_name, field_list);
+}
+
 builder builder::update(std::string table_name) const
 {
 	builder copy{*this};
@@ -147,6 +153,15 @@ builder & builder::select(std::vector<std::string> field_list)
 	push_clause(p_clause);
 
 	fields(field_list);
+
+	return *this;
+}
+
+builder & builder::replace(std::string table_name, std::vector<std::string> field_list)
+{
+	auto p_clause = std::make_shared<clause::replace>(table_name, field_list);
+	push_clause(p_clause);
+	fields(field_list, true);
 
 	return *this;
 }
@@ -247,6 +262,11 @@ template
 void builder::verify_clause_is_allowed<clause::set>(clause::set & clause);
 template
 void builder::push_clause<clause::set>(std::shared_ptr<clause::set> const & p_clause);
+
+template
+void builder::verify_clause_is_allowed<clause::replace>(clause::replace & clause);
+template
+void builder::push_clause<clause::replace>(std::shared_ptr<clause::replace> const & p_clause);
 
 struct query::impl
 {
@@ -363,6 +383,11 @@ void query::visit(clause::set & clause)
 		buffer.push_back((boost::format("`%s` = %s") % setter.first % setter.second).str());
 
 	mp_impl->m_literal += " set " + boost::algorithm::join(buffer, ", ");
+}
+
+void query::visit(clause::replace & clause)
+{
+	mp_impl->m_literal = "replace `" + clause.table_name()  + "`";
 }
 
 std::string const query::str() const

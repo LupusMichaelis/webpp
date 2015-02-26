@@ -28,6 +28,8 @@ class values;
 class update;
 class set;
 
+class replace;
+
 class visitor
 {
 	public:
@@ -40,6 +42,7 @@ class visitor
 		virtual void visit(values & clause) = 0;
 		virtual void visit(update & clause) = 0;
 		virtual void visit(set & clause) = 0;
+		virtual void visit(replace & clause) = 0;
 
 		virtual ~visitor() { };
 };
@@ -100,6 +103,22 @@ class insert : public base
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~insert();
+};
+
+class replace : public base
+{
+	std::string m_table_name;
+	std::vector<std::string> m_field_list;
+
+	public:
+		explicit replace(std::string table_name, std::vector<std::string> const field_list);
+
+		std::string const & table_name() const;
+		std::vector<std::string> const & field_list() const;
+
+		virtual void clone(std::unique_ptr<base> & p_cloned);
+		virtual void accept(visitor & v);
+		virtual ~replace();
 };
 
 class values : public base
@@ -195,6 +214,7 @@ template<> struct follows<from, where> { static bool const value = true; };
 template<> struct follows<where, and_> { static bool const value = true; };
 template<> struct follows<and_, and_> { static bool const value = true; };
 
+template<> struct follows<replace, fields> { static bool const value = true; };
 template<> struct follows<insert, fields> { static bool const value = true; };
 template<> struct follows<fields, values> { static bool const value = true; };
 
@@ -230,6 +250,7 @@ class checker
 		virtual void visit(values & clause)		{ visit<>(clause); }
 		virtual void visit(update & clause)		{ visit<>(clause); }
 		virtual void visit(set & clause)		{ visit<>(clause); }
+		virtual void visit(replace & clause)	{ visit<>(clause); }
 
 		operator bool() { return m_is_valid; }
 };

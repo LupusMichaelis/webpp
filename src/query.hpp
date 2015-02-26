@@ -44,6 +44,8 @@ class query
 
 		void visit(clause::update & clause);
 		void visit(clause::set & clause);
+
+		void visit(clause::replace & clause);
 };
 
 class builder
@@ -59,6 +61,7 @@ class builder
 		// Initiator clauses
 		builder select(std::vector<std::string> field_list) const;
 		builder insert(std::string table_name, std::vector<std::string> field_list) const;
+		builder replace(std::string table_name, std::vector<std::string> field_list) const;
 		builder update(std::string table_name) const;
 
 		// Continuation clauses
@@ -82,6 +85,7 @@ class builder
 		builder & fields(std::vector<std::string> field_list, bool parenthesis = false);
 		builder & select(std::vector<std::string> field_list);
 		builder & insert(std::string table_name, std::vector<std::string> field_list);
+		builder & replace(std::string table_name, std::vector<std::string> field_list);
 		builder & update(std::string table_name);
 
 		template <typename clause_type>
@@ -124,6 +128,11 @@ extern template
 void builder::verify_clause_is_allowed<clause::set>(clause::set & clause);
 extern template
 void builder::push_clause<clause::set>(std::shared_ptr<clause::set> const & p_clause);
+
+extern template
+void builder::verify_clause_is_allowed<clause::replace>(clause::replace & clause);
+extern template
+void builder::push_clause<clause::replace>(std::shared_ptr<clause::replace> const & p_clause);
 
 }} // namespace webpp::query
 

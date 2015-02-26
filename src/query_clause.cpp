@@ -92,6 +92,35 @@ void insert::accept(visitor & v)
 	v.visit(*this);
 }
 
+// replace ////////////////////////////////////////////////////////////////////
+replace::replace(std::string table_name, std::vector<std::string> const field_list)
+	: m_table_name {table_name}
+	, m_field_list {field_list}
+{ }
+
+replace::~replace() {}
+
+void replace::clone(std::unique_ptr<base> & p_cloned)
+{
+	std::unique_ptr<base> p_clonee = std::make_unique<replace>(*this);
+	std::swap(p_cloned, p_clonee);
+}
+
+std::string const & replace::table_name() const
+{
+	return m_table_name;
+}
+
+std::vector<std::string> const & replace::field_list() const
+{
+	return m_field_list;
+}
+
+void replace::accept(visitor & v)
+{
+	v.visit(*this);
+}
+
 // values /////////////////////////////////////////////////////////////////////
 values::values(std::vector<std::vector<std::string>> const value_list)
 	: m_value_list {value_list}
