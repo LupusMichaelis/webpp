@@ -59,6 +59,7 @@ class builder
 		~builder();
 
 		// Initiator clauses
+		builder select() const;
 		builder select(std::vector<std::string> field_list) const;
 		builder insert(std::string table_name, std::vector<std::string> field_list) const;
 		builder replace(std::string table_name, std::vector<std::string> field_list) const;

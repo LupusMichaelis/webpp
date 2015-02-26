@@ -15,6 +15,21 @@ AfterEach(query)
 {
 }
 
+Ensure(query, select_all_from_table)
+{
+	webpp::query::escaper const escaper;
+	webpp::query::builder const builder {escaper};
+
+	webpp::query::query query = builder
+		.select()
+		.from("familly")
+		;
+
+	auto literal = query.str();
+	assert_that(literal.c_str(),
+			is_equal_to_string("select * from `familly`"));
+}
+
 Ensure(query, select_from_where_and_there)
 {
 	webpp::query::escaper const escaper;

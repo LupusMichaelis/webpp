@@ -73,6 +73,12 @@ builder & builder::fields(std::vector<std::string> field_list, bool parenthesis/
 	return *this;
 }
 
+builder builder::select() const
+{
+	builder copy{*this};
+	return copy.select({});
+}
+
 builder builder::select(std::vector<std::string> field_list) const
 {
 	builder copy{*this};
@@ -311,6 +317,12 @@ void query::visit(clause::select & clause)
 
 void query::visit(clause::fields & clause)
 {
+	if(!clause.field_list().size())
+	{
+		mp_impl->m_literal += " *";
+		return;
+	}
+
 	std::vector<std::string> field_list;
 	std::transform(clause.field_list().cbegin()
 		, clause.field_list().cend()
