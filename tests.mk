@@ -27,7 +27,7 @@ all: $(TESTS)
 tests/test_query: tests/test_query.so
 	$(UNITTESTER) $^
 
-tests/test_query.so: src/query.o src/query_clause.o tests/test_query.o
+tests/test_query.so: src/query.o src/query_clause.o src/query_builder.o tests/test_query.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(LDFLAGS) -fPIC
 
 # HTTP input request ###################################################

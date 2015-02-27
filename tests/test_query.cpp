@@ -1,4 +1,5 @@
 #include "../src/query.hpp"
+#include "../src/query_builder.hpp"
 
 #include <boost/format.hpp>
 #include <cgreen/cgreen.h>
