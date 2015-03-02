@@ -13,6 +13,9 @@ visitor::~visitor()
 {
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// class var ///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 struct var::impl
 {
 	impl() : is_null(true) {}
@@ -72,6 +75,9 @@ var::operator bool() const
 	return !mp_impl->is_null;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// class string ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 string::string()
 	: m_value {}
 {
@@ -128,10 +134,18 @@ void string::accept(visitor & v)
 	v.visit(*this);
 }
 
+void string::clone(std::shared_ptr<var> & p_v)
+{
+	p_v = std::make_unique<string>(*this);
+}
+
 string::~string()
 {
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// class integer ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 integer::integer()
 	: m_value()
 {
@@ -189,7 +203,78 @@ void integer::accept(visitor & v)
 	v.visit(*this);
 }
 
+void integer::clone(std::shared_ptr<var> & p_v)
+{
+	p_v = std::make_unique<integer>(*this);
+}
+
 integer::~integer()
+{
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// class boolean ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+boolean::boolean()
+	: m_value()
+{
+}
+
+boolean::boolean(boolean const & copied)
+	: m_value(copied.m_value)
+{
+}
+
+boolean::boolean(std::string const & copied)
+	: boolean(copied == "true" ? true : false)
+{
+}
+
+boolean::boolean(bool const copied)
+	: m_value(copied)
+{
+}
+
+boolean & boolean::operator=(boolean const & copied)
+{
+	m_value = copied.m_value;
+	return *this;
+}
+
+boolean::operator bool() const
+{
+	return nullptr != *this and m_value;
+}
+
+boolean & boolean::operator =(bool const new_value)
+{
+	set_not_null();
+	m_value = new_value;
+
+	return *this;
+}
+
+bool boolean::operator ==(bool const rhs) const
+{
+	return nullptr != *this or (m_value and rhs);
+}
+
+bool boolean::operator ==(boolean const & rhs) const
+{
+	return var::operator ==(rhs) or *this == rhs.m_value;
+}
+
+void boolean::accept(visitor & v)
+{
+	v.visit(*this);
+}
+
+void boolean::clone(std::shared_ptr<var> & p_v)
+{
+	p_v = std::make_unique<boolean>(*this);
+}
+
+boolean::~boolean()
 {
 }
 

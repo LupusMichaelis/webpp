@@ -1,7 +1,8 @@
-#ifndef HPP_CLAUSE_CLAUSE_QUERY_WEBPP
-#	define HPP_CLAUSE_CLAUSE_QUERY_WEBPP
+#ifndef HPP_CLAUSE_QUERY_WEBPP
+#	define HPP_CLAUSE_QUERY_WEBPP
 
 #	include "memory.hpp"
+#	include "query_schema.hpp"
 
 #	include <map>
 #	include <string>
@@ -9,6 +10,13 @@
 
 namespace webpp {
 namespace query {
+
+namespace schema {
+class field;
+class table;
+}
+
+class var;
 
 namespace clause {
 
@@ -63,7 +71,8 @@ class base
 		virtual ~base();
 };
 
-class select : public base
+class select
+	: public base
 {
 	public:
 		explicit select();
@@ -73,15 +82,16 @@ class select : public base
 		virtual ~select();
 };
 
-class fields : public base
+class fields
+	: public base
 {
-	std::vector<std::string> m_field_list;
+	std::vector<schema::field> m_field_list;
 	bool m_parenthesis = false;
 
 	public:
-		fields(std::vector<std::string> const field_list, bool parenthesis);
+		fields(std::vector<schema::field> field_list, bool parenthesis);
 
-		std::vector<std::string> const & field_list() const;
+		std::vector<schema::field> const & field_list() const;
 		bool const parenthesis() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
@@ -89,119 +99,126 @@ class fields : public base
 		virtual ~fields();
 };
 
-class insert : public base
+class insert
+	: public base
 {
-	std::string m_table_name;
-	std::vector<std::string> m_field_list;
+	schema::table m_table;
+	std::vector<schema::field> m_field_list;
 
 	public:
-		explicit insert(std::string table_name, std::vector<std::string> const field_list);
+		explicit insert(schema::table table);
+		insert(schema::table table, std::vector<schema::field> field_list);
 
-		std::string const & table_name() const;
-		std::vector<std::string> const & field_list() const;
+		schema::table const & table() const;
+		std::vector<schema::field> const & field_list() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~insert();
 };
 
-class replace : public base
+class replace
+	: public base
 {
-	std::string m_table_name;
-	std::vector<std::string> m_field_list;
+	schema::table m_table;
+	std::vector<schema::field> m_field_list;
 
 	public:
-		explicit replace(std::string table_name, std::vector<std::string> const field_list);
+		explicit replace(schema::table table);
+		explicit replace(schema::table table, std::vector<schema::field> field_list);
 
-		std::string const & table_name() const;
-		std::vector<std::string> const & field_list() const;
+		schema::table const & table() const;
+		std::vector<schema::field> const & field_list() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~replace();
 };
 
-class values : public base
+class values
+	: public base
 {
-	std::vector<std::vector<std::string>> m_value_list;
+	std::vector<std::vector<std::shared_ptr<var>>> m_value_list;
 
 	public:
-		explicit values(std::vector<std::vector<std::string>> const value_list);
+		explicit values(std::vector<std::vector<std::shared_ptr<var>>> value_list);
 
-		std::vector<std::vector<std::string>> const & value_list() const;
+		std::vector<std::vector<std::shared_ptr<var>>> const & value_list() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~values();
 };
 
-class from : public base
+class from
+	: public base
 {
-	std::string m_table_name;
+	schema::table m_table;
 
 	public:
-		explicit from(std::string table_name);
+		explicit from(schema::table table);
 
-		std::string const & table_name() const;
+		schema::table const & table() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~from();
 };
 
-class where : public base
+class where
+	: public base
 {
-	std::string m_lhs, m_rhs;
+	schema::field m_lhs;
+	std::shared_ptr<var> mp_rhs;
 
 	public:
-		where(std::string lhs, std::string rhs);
+		where(schema::field lhs, std::shared_ptr<var> p_rhs);
 
-		std::string const & lhs() const;
-		std::string const & rhs() const;
+		schema::field const & lhs() const;
+		var const & rhs() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~where();
 };
 
-class and_ : public base
+class and_
+	: public where
 {
-	std::string m_lhs, m_rhs;
-
 	public:
-		and_(std::string lhs, std::string rhs);
-
-		std::string const & lhs() const;
-		std::string const & rhs() const;
+		and_(schema::field lhs, std::shared_ptr<var> p_rhs)
+			: where {lhs, p_rhs} { }
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~and_();
 };
 
-class update : public base
+class update
+	: public base
 {
-	std::string m_table;
+	schema::table m_table;
 
 	public:
-		explicit update(std::string table);
+		explicit update(schema::table table);
 
-		std::string const & table_name() const;
+		schema::table const & table() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~update();
 };
 
-class set : public base
+class set
+	: public base
 {
-	std::map<std::string, std::string> m_field_list;
+	std::map<schema::field, std::shared_ptr<var>> m_field_list;
 
 	public:
-		set(std::map<std::string, std::string> field_list);
-		set(std::string field_name, std::string value_name);
+		explicit set(std::map<schema::field, std::shared_ptr<var>> field_value_pair_list);
+		set(schema::field field, std::shared_ptr<var> value_name);
 
-		std::map<std::string, std::string> const & field_list();
+		std::map<schema::field, std::shared_ptr<var>> const & field_value_pair_list();
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
@@ -216,6 +233,7 @@ template<> struct follows<and_, and_> { static bool const value = true; };
 
 template<> struct follows<replace, fields> { static bool const value = true; };
 template<> struct follows<insert, fields> { static bool const value = true; };
+template<> struct follows<insert, values> { static bool const value = true; };
 template<> struct follows<fields, values> { static bool const value = true; };
 
 template<> struct follows<update, set> { static bool const value = true; };

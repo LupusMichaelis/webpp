@@ -1,5 +1,6 @@
 
 #include "query.hpp"
+#include "query_var.hpp"
 
 #include <algorithm>
 #include <boost/format.hpp>
@@ -61,9 +62,10 @@ void query::visit(clause::fields & clause)
 	std::transform(clause.field_list().cbegin()
 		, clause.field_list().cend()
 		, std::back_inserter(field_list)
-		, [] (std::string const & value) -> std::string const
+		, [] (schema::field const & field)
+			-> std::string const
 			{
-				return "`" + value  + "`";
+				return "`" + field.name()  + "`";
 			}
 		);
 	auto field_list_literal = boost::algorithm::join(field_list, ", ");
@@ -76,22 +78,30 @@ void query::visit(clause::fields & clause)
 
 void query::visit(clause::from & clause)
 {
-	mp_impl->m_literal += (boost::format(" from `%s`") % clause.table_name()).str();
+	mp_impl->m_literal += (boost::format(" from `%s`") % clause.table().name()).str();
 }
 
 void query::visit(clause::where & clause)
 {
-	mp_impl->m_literal += (boost::format(" where `%s` = %s") % clause.lhs() % clause.rhs()).str();
+	auto const & value = dynamic_cast<string const &>(clause.rhs());
+	mp_impl->m_literal += (boost::format(" where `%s` = %s")
+			% clause.lhs().name()
+			% value.get()
+			).str();
 }
 
 void query::visit(clause::and_ & clause)
 {
-	mp_impl->m_literal += (boost::format(" and `%s` = %s") % clause.lhs() % clause.rhs()).str();
+	auto const & value = dynamic_cast<string const &>(clause.rhs());
+	mp_impl->m_literal += (boost::format(" and `%s` = %s")
+			% clause.lhs().name()
+			% value.get()
+			).str();
 }
 
 void query::visit(clause::insert & clause)
 {
-	mp_impl->m_literal = "insert `" + clause.table_name()  + "`";
+	mp_impl->m_literal = "insert `" + clause.table().name()  + "`";
 }
 
 void query::visit(clause::values & clause)
@@ -104,9 +114,11 @@ void query::visit(clause::values & clause)
 		std::transform(value_row.cbegin()
 			, value_row.cend()
 			, std::back_inserter(value_list)
-			, [] (std::string const & value) -> std::string const
+			, [] (std::shared_ptr<var> const & p_var)
+				-> std::string const
 				{
-					return "\"" + value  + "\"";
+					auto const & value = dynamic_cast<string const &>(*p_var);
+					return "\"" + value.get()  + "\"";
 				}
 			);
 		value_row_list.push_back("(" + boost::algorithm::join(value_list, ", ") + ")");
@@ -119,21 +131,27 @@ void query::visit(clause::values & clause)
 
 void query::visit(clause::update & clause)
 {
-	mp_impl->m_literal = (boost::format("update `%s`") % clause.table_name()).str();
+	mp_impl->m_literal = (boost::format("update `%s`") % clause.table().name()).str();
 }
 
 void query::visit(clause::set & clause)
 {
 	std::vector<std::string> buffer;
-	for(auto setter: clause.field_list())
-		buffer.push_back((boost::format("`%s` = %s") % setter.first % setter.second).str());
+	for(auto setter: clause.field_value_pair_list())
+	{
+		auto const & value = dynamic_cast<string const &>(*setter.second);
+		buffer.push_back((boost::format("`%s` = %s")
+				% setter.first.name()
+				% value.get()
+				).str());
+	}
 
 	mp_impl->m_literal += " set " + boost::algorithm::join(buffer, ", ");
 }
 
 void query::visit(clause::replace & clause)
 {
-	mp_impl->m_literal = "replace `" + clause.table_name()  + "`";
+	mp_impl->m_literal = "replace `" + clause.table().name()  + "`";
 }
 
 std::string const query::str() const

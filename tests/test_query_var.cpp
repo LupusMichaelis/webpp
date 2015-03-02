@@ -1,5 +1,5 @@
 
-#include "../src/mysql_var.hpp"
+#include "../src/query_var.hpp"
 
 #include <iosfwd>
 #include <sstream>
@@ -7,7 +7,7 @@
 
 namespace {
 
-using namespace webpp::mysql;
+using namespace webpp::query;
 
 class printer : public visitor
 {
@@ -61,7 +61,7 @@ AfterEach(mysql_var)
 
 Ensure(mysql_var, null_object_is_null)
 {
-	webpp::mysql::string null;
+	webpp::query::string null;
 	assert_that(null == nullptr, is_true);
 	assert_that(nullptr == null, is_true);
 
@@ -77,7 +77,7 @@ Ensure(mysql_var, null_object_is_null)
 
 Ensure(mysql_var, visit_string)
 {
-	webpp::mysql::string my_subject;
+	webpp::query::string my_subject;
 	assert_that(my_subject == nullptr, is_true);
 	assert_that(nullptr == my_subject, is_true);
 

@@ -10,12 +10,12 @@ CXXFLAGS += \
 		-I$(HOME)/.local/include/ \
 
 TESTS= \
+	   $(TESTDIR)/test_query_var \
 	   $(TESTDIR)/test_query \
 	   $(TESTDIR)/test_model \
 	   $(TESTDIR)/test_router \
 	   $(TESTDIR)/test_json \
 	   $(TESTDIR)/test_url \
-	   $(TESTDIR)/test_query_var \
 
 UNITTESTER=cgreen-runner --colours
 
@@ -27,7 +27,7 @@ all: $(TESTS)
 tests/test_query: tests/test_query.so
 	$(UNITTESTER) $^
 
-tests/test_query.so: src/query.o src/query_clause.o src/query_builder.o tests/test_query.o
+tests/test_query.so: src/query.o src/query_var.o src/query_clause.o src/query_builder.o tests/test_query.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(LDFLAGS) -fPIC
 
 # HTTP input request ###################################################

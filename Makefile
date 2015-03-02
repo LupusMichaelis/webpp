@@ -7,6 +7,7 @@ CPPFILES= \
 	  json_parser.cpp \
 	  json.cpp \
 	  query_clause.cpp \
+	  query_builder.cpp \
 	  query.cpp \
 	  query_var.cpp \
 	  mysql_result.cpp \

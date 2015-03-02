@@ -1,5 +1,7 @@
 #include "query.hpp"
 #include "query_clause.hpp"
+#include "query_var.hpp"
+#include "query_schema.hpp"
 
 namespace webpp {
 namespace query {
@@ -35,7 +37,7 @@ void select::accept(visitor & visitor)
 }
 
 // fields /////////////////////////////////////////////////////////////////////
-fields::fields(std::vector<std::string> const field_list, bool parenthesis)
+fields::fields(std::vector<schema::field> field_list, bool parenthesis)
 	: m_field_list {field_list}
 	, m_parenthesis(parenthesis)
 { }
@@ -48,7 +50,7 @@ void fields::clone(std::unique_ptr<base> & p_cloned)
 	std::swap(p_cloned, p_clonee);
 }
 
-std::vector<std::string> const & fields::field_list() const
+std::vector<schema::field> const & fields::field_list() const
 {
 	return m_field_list;
 }
@@ -64,10 +66,16 @@ void fields::accept(visitor & v)
 }
 
 // insert /////////////////////////////////////////////////////////////////////
-insert::insert(std::string table_name, std::vector<std::string> const field_list)
-	: m_table_name {table_name}
+insert::insert(schema::table table)
+	: m_table {table}
+{
+}
+
+insert::insert(schema::table table, std::vector<schema::field> field_list)
+	: m_table {table}
 	, m_field_list {field_list}
-{ }
+{
+}
 
 insert::~insert() {}
 
@@ -77,12 +85,12 @@ void insert::clone(std::unique_ptr<base> & p_cloned)
 	std::swap(p_cloned, p_clonee);
 }
 
-std::string const & insert::table_name() const
+schema::table const & insert::table() const
 {
-	return m_table_name;
+	return m_table;
 }
 
-std::vector<std::string> const & insert::field_list() const
+std::vector<schema::field> const & insert::field_list() const
 {
 	return m_field_list;
 }
@@ -93,10 +101,17 @@ void insert::accept(visitor & v)
 }
 
 // replace ////////////////////////////////////////////////////////////////////
-replace::replace(std::string table_name, std::vector<std::string> const field_list)
-	: m_table_name {table_name}
+replace:: replace(schema::table table)
+	: m_table {table}
+	, m_field_list {}
+{
+}
+
+replace::replace(schema::table table, std::vector<schema::field> field_list)
+	: m_table {table}
 	, m_field_list {field_list}
-{ }
+{
+}
 
 replace::~replace() {}
 
@@ -106,12 +121,12 @@ void replace::clone(std::unique_ptr<base> & p_cloned)
 	std::swap(p_cloned, p_clonee);
 }
 
-std::string const & replace::table_name() const
+schema::table const & replace::table() const
 {
-	return m_table_name;
+	return m_table;
 }
 
-std::vector<std::string> const & replace::field_list() const
+std::vector<schema::field> const & replace::field_list() const
 {
 	return m_field_list;
 }
@@ -122,7 +137,7 @@ void replace::accept(visitor & v)
 }
 
 // values /////////////////////////////////////////////////////////////////////
-values::values(std::vector<std::vector<std::string>> const value_list)
+values::values(std::vector<std::vector<std::shared_ptr<var>>> value_list)
 	: m_value_list {value_list}
 { }
 
@@ -134,7 +149,7 @@ void values::clone(std::unique_ptr<base> & p_cloned)
 	std::swap(p_cloned, p_clonee);
 }
 
-std::vector<std::vector<std::string>> const & values::value_list() const
+std::vector<std::vector<std::shared_ptr<var>>> const & values::value_list() const
 {
 	return m_value_list;
 }
@@ -145,15 +160,15 @@ void values::accept(visitor & v)
 }
 
 // from ///////////////////////////////////////////////////////////////////////
-from::from(std::string table_name)
-	: m_table_name {table_name}
+from::from(schema::table table)
+	: m_table {table}
 { }
 
 from::~from() {}
 
-std::string const & from::table_name() const
+schema::table const & from::table() const
 {
-	return m_table_name;
+	return m_table;
 }
 
 void from::clone(std::unique_ptr<base> & p_cloned)
@@ -168,20 +183,21 @@ void from::accept(visitor & v)
 }
 
 // where //////////////////////////////////////////////////////////////////////
-where::where(std::string lhs, std::string rhs)
-	: m_lhs {lhs}, m_rhs {rhs}
+where::where(schema::field lhs, std::shared_ptr<var> p_rhs)
+	: m_lhs {lhs}
+	, mp_rhs {p_rhs}
 { }
 
 where::~where() {}
 
-std::string const & where::lhs() const
+schema::field const & where::lhs() const
 {
 	return m_lhs;
 }
 
-std::string const & where::rhs() const
+var const & where::rhs() const
 {
-	return m_rhs;
+	return *mp_rhs;
 }
 
 void where::clone(std::unique_ptr<base> & p_cloned)
@@ -196,21 +212,7 @@ void where::accept(visitor & v)
 }
 
 // and_ ///////////////////////////////////////////////////////////////////////
-and_::and_(std::string lhs, std::string rhs)
-	: m_lhs {lhs}, m_rhs {rhs}
-{ }
-
 and_::~and_() {}
-
-std::string const & and_::lhs() const
-{
-	return m_lhs;
-}
-
-std::string const & and_::rhs() const
-{
-	return m_rhs;
-}
 
 void and_::clone(std::unique_ptr<base> & p_cloned)
 {
@@ -224,12 +226,12 @@ void and_::accept(visitor & v)
 }
 
 // update /////////////////////////////////////////////////////////////////////
-update::update(std::string table)
+update::update(schema::table table)
 	: m_table {table}
 {
 }
 
-std::string const & update::table_name() const
+schema::table const & update::table() const
 {
 	return m_table;
 }
@@ -250,17 +252,17 @@ update::~update()
 }
 
 // set ////////////////////////////////////////////////////////////////////////
-set::set(std::map<std::string, std::string> field_list)
-	: m_field_list { field_list }
+set::set(std::map<schema::field, std::shared_ptr<var>> field_value_pair_list)
+	: m_field_list { field_value_pair_list }
 {
 }
 
-set::set(std::string field_name, std::string value_name)
-	: set {{{field_name, value_name}}}
+set::set(schema::field field, std::shared_ptr<var> value)
+	: set {{{field, value}}}
 {
 }
 
-std::map<std::string, std::string> const & set::field_list()
+std::map<schema::field, std::shared_ptr<var>> const & set::field_value_pair_list()
 {
 	return m_field_list;
 }

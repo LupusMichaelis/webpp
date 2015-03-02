@@ -19,7 +19,7 @@ AfterEach(query)
 Ensure(query, select_all_from_table)
 {
 	webpp::query::escaper const escaper;
-	webpp::query::builder const builder {escaper};
+	webpp::query::simple_builder const builder {escaper};
 
 	webpp::query::query query = builder
 		.select()
@@ -34,7 +34,7 @@ Ensure(query, select_all_from_table)
 Ensure(query, select_from_where_and_there)
 {
 	webpp::query::escaper const escaper;
-	webpp::query::builder const builder {escaper};
+	webpp::query::simple_builder const builder {escaper};
 
 	webpp::query::query query = builder
 		.select({"id", "name"})
@@ -52,10 +52,10 @@ Ensure(query, select_from_where_and_there)
 				));
 }
 
-Ensure(query, insert_into_table_values)
+Ensure(query, insert_into_table_field_values)
 {
 	webpp::query::escaper const escaper;
-	webpp::query::builder const builder {escaper};
+	webpp::query::simple_builder const builder {escaper};
 
 	webpp::query::query query = builder
 		.insert("familly", {"name"})
@@ -72,10 +72,29 @@ Ensure(query, insert_into_table_values)
 				));
 }
 
+Ensure(query, insert_into_table_values)
+{
+	webpp::query::escaper const escaper;
+	webpp::query::simple_builder const builder {escaper};
+
+	webpp::query::query query = builder
+		.insert("familly")
+		.values({{"Mickael"}, {"Ania"}, {"Dagmara"}})
+		;
+
+	auto literal = query.str();
+	assert_that(literal.c_str(),
+			is_equal_to_string(
+				"insert `familly`"
+				" values"
+				" (\"Mickael\"), (\"Ania\"), (\"Dagmara\")"
+				));
+}
+
 Ensure(query, replace)
 {
 	webpp::query::escaper const escaper;
-	webpp::query::builder const builder {escaper};
+	webpp::query::simple_builder const builder {escaper};
 
 	webpp::query::query query = builder
 		.replace("familly", {"name"})
@@ -95,7 +114,7 @@ Ensure(query, replace)
 Ensure(query, update)
 {
 	webpp::query::escaper const escaper;
-	webpp::query::builder const builder {escaper};
+	webpp::query::simple_builder const builder {escaper};
 
 	webpp::query::query query = builder
 		.update("peoples")
@@ -114,14 +133,18 @@ Ensure(query, update)
 
 Ensure(query, visit_select_from_where_and_there)
 {
-	webpp::query::clause::select	select;
-	webpp::query::clause::fields	fields	{{"toto"}, false};
-	webpp::query::clause::from		from	{"toto"};
-	webpp::query::clause::where		where	{"id", "1"};
-	webpp::query::clause::and_		and_	{"is_active", "false"};
+	namespace wq = webpp::query;
+	namespace wqc = wq::clause;
+	namespace wqs = wq::schema;
+
+	wqc::select	select;
+	wqc::fields	fields	{{wqs::field{"toto"}}, false};
+	wqc::from	from	{wqs::table{"toto"}};
+	wqc::where	where	{wqs::field{"id"}, std::make_shared<wq::string>("1")};
+	wqc::and_	and_	{wqs::field{"is_active"}, std::make_shared<wq::boolean>("false")};
 
 	{
-		auto step = webpp::query::clause::checker<webpp::query::clause::fields>(fields);
+		auto step = wqc::checker<wqc::fields>(fields);
 
 		step.visit(select);
 		assert_that((bool) step, is_true);
@@ -133,7 +156,7 @@ Ensure(query, visit_select_from_where_and_there)
 	}
 
 	{
-		auto step = webpp::query::clause::checker<webpp::query::clause::from>(from);
+		auto step = wqc::checker<wqc::from>(from);
 
 		step.visit(select);
 		assert_that((bool) step, is_false);
@@ -146,7 +169,7 @@ Ensure(query, visit_select_from_where_and_there)
 	}
 
 	{
-		auto step = webpp::query::clause::checker<webpp::query::clause::where>(where);
+		auto step = wqc::checker<wqc::where>(where);
 
 		step.visit(select);
 		assert_that((bool) step, is_false);
@@ -162,7 +185,7 @@ Ensure(query, visit_select_from_where_and_there)
 	}
 
 	{
-		auto step = webpp::query::clause::checker<webpp::query::clause::and_>(and_);
+		auto step = wqc::checker<wqc::and_>(and_);
 
 		step.visit(select);
 		assert_that((bool) step, is_false);
@@ -179,4 +202,10 @@ Ensure(query, visit_select_from_where_and_there)
 		step.visit(and_);
 		assert_that((bool) step, is_true); // can chain
 	}
+}
+
+int main()
+{
+	query__select_from_where_and_there();
+	query__insert_into_table_values();
 }

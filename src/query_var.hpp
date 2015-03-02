@@ -1,5 +1,5 @@
-#ifndef HPP_MYSQL_VAR
-#	define HPP_MYSQL_VAR
+#ifndef HPP_VAR_QUERY_WEBPP
+#	define HPP_VAR_QUERY_WEBPP
 
 #	include "memory.hpp"
 #	include <string>
@@ -46,9 +46,11 @@ class var
 		virtual bool operator ==(var const & rhs) const;
 
 		virtual void accept(visitor & v) = 0;
+		virtual void clone(std::shared_ptr<var> & p_v) = 0;
 };
 
-class string : public var
+class string
+	: public var
 {
 	std::string m_value;
 
@@ -76,10 +78,12 @@ class string : public var
 		virtual bool operator ==(std::string const & rhs) const;
 
 		virtual void accept(visitor & v);
+		virtual void clone(std::shared_ptr<var> & p_v);
 		virtual ~string();
 };
 
-class integer : public var
+class integer
+	: public var
 {
 	long long m_value;
 
@@ -104,23 +108,24 @@ class integer : public var
 		virtual bool operator ==(long long const rhs) const;
 
 		virtual void accept(visitor & v);
+		virtual void clone(std::shared_ptr<var> & p_v);
 		virtual ~integer();
 };
 
-class boolean : public var
+class boolean
+	: public var
 {
-	long long m_value;
+	bool m_value;
 
 	public:
 		boolean();
 		boolean(boolean const & copied);
 		explicit boolean(std::string const & copied);
 		explicit boolean(bool const copied);
-		virtual integer & operator=(boolean const & copied);
+		virtual boolean & operator=(boolean const & copied);
+		virtual boolean & operator=(bool const copied);
 
 		virtual operator bool() const;
-
-		virtual void set(bool const new_value);
 
 		//using var::operator ==;
 		virtual bool operator ==(boolean const & rhs) const;
@@ -131,8 +136,15 @@ class boolean : public var
 		virtual bool operator ==(bool const rhs) const;
 
 		virtual void accept(visitor & v);
+		virtual void clone(std::shared_ptr<var> & p_v);
 		virtual ~boolean();
 };
+
+template <typename value_type>
+void build(std::shared_ptr<var> & p_node)
+{
+	p_node = std::move(std::make_shared<value_type>());
+}
 
 } } // namespace webpp::query
 
@@ -157,4 +169,4 @@ inline bool operator ==(std::string const & lhs, webpp::query::var const & rhs)
 	return dynamic_cast<webpp::query::string const &>(rhs).get() == lhs;
 }
 
-#endif // HPP_MYSQL_VAR
+#endif // HPP_VAR_QUERY_WEBPP
