@@ -140,7 +140,7 @@ void query::visit(clause::set & clause)
 	for(auto setter: clause.field_value_pair_list())
 	{
 		auto const & value = dynamic_cast<string const &>(*setter.second);
-		buffer.push_back((boost::format("`%s` = %s")
+		buffer.push_back((boost::format("`%s` = '%s'")
 				% setter.first.name()
 				% value.get()
 				).str());

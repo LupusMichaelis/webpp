@@ -38,11 +38,13 @@ class model
 		typedef std::vector<std::shared_ptr<query::var>>
 													row_type;
 		typedef std::vector<row_type>				row_list_type;
-		typedef std::vector<std::string>			field_list_type;
+		typedef std::vector<query::schema::field>
+													field_list_type;
 
-		typedef std::pair<query::schema::field, std::shared_ptr<query::var>>
+		typedef std::map<query::schema::field, std::shared_ptr<query::var>>
+													criteria_list_type;
+		typedef typename criteria_list_type::value_type
 													criteria_type;
-		typedef std::vector<criteria_type>			criteria_list_type;
 
 	public:
 		model();
@@ -57,7 +59,9 @@ class model
 			, criteria_list_type criterias
 			);
 		bool update(std::string table_name
-				, criteria_list_type set_criterias
+				, field_list_type const & fields
+				, row_list_type const & original_rows
+				, row_list_type const & updated_rows
 				, criteria_list_type where_criterias
 				);
 		bool insert(std::string table_name

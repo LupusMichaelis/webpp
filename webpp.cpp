@@ -1,3 +1,12 @@
+#include "src/convert_rows_to_json.hpp"
+#include "src/http_request.hpp"
+#include "src/json.hpp"
+#include "src/json_parser.hpp"
+#include "src/model.hpp"
+#include "src/mysql_connection.hpp"
+#include "src/query_schema.hpp"
+#include "src/query_var.hpp"
+
 #include <algorithm>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
@@ -26,17 +35,11 @@ std::map<std::string, std::string> const make_header()
 	return header;
 }
 
-#include "src/mysql_connection.hpp"
-#include "src/model.hpp"
-#include "src/convert_rows_to_json.hpp"
-#include "src/json.hpp"
-#include "src/http_request.hpp"
-
-void print_json(std::ostream & out, webpp::model::row_list_type rows)
+void print_json(std::ostream & out, webpp::model::field_list_type fields, webpp::model::row_list_type rows)
 {
 	std::unique_ptr<webpp::json::array> p_array;
 	webpp::json::build(p_array);
-	*p_array << rows;
+	webpp::cast(*p_array, fields, rows);
 
 	if(0u == p_array->values().size())
 		webpp::json::dump(out, webpp::json::null());
@@ -46,7 +49,7 @@ void print_json(std::ostream & out, webpp::model::row_list_type rows)
 		webpp::json::dump(out, static_cast<webpp::json::value&>(*p_array));
 }
 
-void print_html(std::ostream & out, webpp::model::row_list_type rows)
+void print_html(std::ostream & out, webpp::model::field_list_type fields, webpp::model::row_list_type rows)
 {
 	out << "<!DOCTYPE html>\n"
 		"<html>\n"
@@ -55,7 +58,7 @@ void print_html(std::ostream & out, webpp::model::row_list_type rows)
 		"\t\t";
 
 	out << "\t\t\t<pre>\n";
-	print_json(out, rows);
+	print_json(out, fields, rows);
 	out << "\t\t\t</pre>\n";
 
 	out << "\n"
@@ -63,14 +66,12 @@ void print_html(std::ostream & out, webpp::model::row_list_type rows)
 		"</html>\n";
 }
 
-#include "src/json_parser.hpp"
-
 void json_extract
-	( std::unique_ptr<std::map<std::string, std::shared_ptr<webpp::query::var>>> & p_changes
+	( std::unique_ptr<webpp::model::criteria_list_type> & p_submitted
 	, std::istream & in
 	)
 {
-	auto p_out = std::make_unique<std::remove_reference<decltype(p_changes)>::type::element_type>();
+	auto p_out = std::make_unique<std::remove_reference<decltype(p_submitted)>::type::element_type>();
 
 	std::unique_ptr<webpp::json::value> p_tree;
 	webpp::json::parse(p_tree, in);
@@ -79,12 +80,13 @@ void json_extract
 	{
 		// TODO visitor to convert json to mysql
 		auto & value = dynamic_cast<webpp::json::string &>(*property.second).get();
-		auto p_mysql_var = std::make_shared<webpp::mysql::string>(value);
+		auto p_mysql_var = std::make_shared<webpp::query::string>(value);
+		webpp::query::schema::field field{property.first};
 
-		p_out->insert(std::make_pair(property.first, p_mysql_var));
+		p_out->insert(std::make_pair(field, p_mysql_var));
 	}
 
-	std::swap(p_out, p_changes);
+	std::swap(p_out, p_submitted);
 }
 
 int main()
@@ -104,7 +106,7 @@ int main()
 	std::string table_name {segments[1]};
 
 	std::string criteria;
-	webpp::model::row_type criterias;
+	webpp::model::criteria_list_type criterias;
 
 	if(segments.size() > 2)
 	{
@@ -115,14 +117,19 @@ int main()
 		auto match_options = boost::match_perl;
 		if(boost::regex_match(criteria, results, re, match_options))
 		{
-			std::shared_ptr<webpp::query::var> p_var { std::make_shared<webpp::mysql::string>(std::string {results[2].first, results[2].second}) };
-			webpp::model::row_type::value_type criteria { {results[1].first, results[1].second }, p_var };
+			webpp::query::schema::field key {std::string {results[1].first, results[1].second}};
+
+			std::string value {results[2].first, results[2].second};
+			std::shared_ptr<webpp::query::var> p_var { std::make_shared<webpp::query::string>(value) };
+
+			auto criteria = std::make_pair(key, p_var);
 			criterias.insert(criteria);
 		}
 	}
 
 	webpp::model m;
 	std::unique_ptr<webpp::model::row_list_type> p_rows;
+	std::unique_ptr<webpp::model::field_list_type> p_fields;
 
 	auto p_con = std::make_shared<webpp::mysql::connection>();
 	p_con->connect("localhost", "test", "test", "test", 3308);
@@ -130,26 +137,37 @@ int main()
 
 	if("GET" == request.method())
 	{
-		m.get_by_criterias(p_rows, table_name, criterias);
-		print_json(std::cout, *p_rows);
+		m.get_by_criterias(p_fields, p_rows, table_name, criterias);
+		print_json(std::cout, *p_fields, *p_rows);
 	}
 	else if("POST" == request.method())
 	{
-		std::unique_ptr<webpp::model::row_type> p_changes;
-		json_extract(p_changes, std::cin);
+		std::unique_ptr<webpp::model::criteria_list_type> p_submitted;
+		json_extract(p_submitted, std::cin);
 
-		m.get_by_criterias(p_rows, table_name, criterias);
+		m.get_by_criterias(p_fields, p_rows, table_name, criterias);
+
+		webpp::model::row_list_type updated_rows;
 		for(auto row: *p_rows)
 		{
-			// TODO: change MySQL vars from JSON
+			webpp::model::row_type updated_row;
+			for(size_t idx = 0; idx < p_fields->size(); ++idx)
+			{
+				webpp::query::schema::field field {p_fields->at(idx)};
+				auto const & p_value = (*p_submitted)[field];
+
+				updated_row.push_back(p_value);
+			}
+
+			updated_rows.push_back(updated_row);
 		}
 
-		m.update(table_name, *p_changes, criterias);
+		m.update(table_name, *p_fields, *p_rows, updated_rows, criterias);
 	}
 	else if("PUT" == request.method())
 	{
-		std::unique_ptr<webpp::model::row_type> p_changes;
-		json_extract(p_changes, std::cin);
+		std::unique_ptr<webpp::model::criteria_list_type> p_submitted;
+		json_extract(p_submitted, std::cin);
 
 		m.replace(table_name, *p_changes);
 	}

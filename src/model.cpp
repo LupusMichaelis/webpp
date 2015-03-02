@@ -3,11 +3,12 @@
 #include "mysql_connection.hpp"
 #include "mysql_result.hpp"
 
-#include <boost/format.hpp>
-#include <boost/algorithm/string/join.hpp>
-
 #include "query.hpp"
 #include "query_builder.hpp"
+
+#include <boost/format.hpp>
+#include <boost/iterator/zip_iterator.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 namespace webpp {
 
@@ -97,11 +98,15 @@ void model::get_by_criterias
 	, criteria_list_type criterias
 	)
 {
-	webpp::query::query query = query_builder()
+	webpp::query::simple_builder builder = query_builder()
 		.select()
 		.from(table_name)
-		.builder::where(criterias.cbegin()->first, criterias.cbegin()->second)
 		;
+
+	if(0 < criterias.size())
+		builder.builder::where(criterias.cbegin()->first, criterias.cbegin()->second) ;
+
+	webpp::query::query query {builder};
 
 	std::unique_ptr<mysql::result> p_result;
 	mp_impl->p_connection->query(p_result, query);
@@ -113,36 +118,73 @@ void model::get_by_criterias
 		, p_field_list->cend()
 		, std::back_inserter(*p_fields)
 		, [] (mysql::result::field_list_type::value_type const & p_field)
-			-> std::string
-			{ return p_field->name(); }
+			-> query::schema::field
+			{ return query::schema::field{p_field->name()}; }
 		);
 
 	p_result->rows(p_rows);
 }
 
 bool model::update(std::string table_name
-		, criteria_list_type set_criterias
+		, field_list_type const & fields
+		, row_list_type const & original_rows
+		, row_list_type const & updated_rows
 		, criteria_list_type where_criterias
 		)
 {
-	webpp::query::query query = query_builder()
+	bool return_value = false;
+
+	auto builder = query_builder()
 		.update(table_name)
-		.builder::where(set_criterias.cbegin()->first, set_criterias.cbegin()->second)
-		.builder::where(where_criterias.cbegin()->first, where_criterias.cbegin()->second)
 		;
 
-	std::unique_ptr<mysql::result> p_result;
-	mp_impl->p_connection->query(p_result, query);
+	auto & connection = *mp_impl->p_connection;
 
-	return p_result->updated_rows() > 0;
+	std::for_each
+		( boost::make_zip_iterator(boost::make_tuple(original_rows.cbegin(), updated_rows.cbegin()))
+		, boost::make_zip_iterator(boost::make_tuple(original_rows.cend(), updated_rows.cend()))
+		, [&builder, &fields, &connection, &return_value, &where_criterias]
+			(const boost::tuple<row_type const & , row_type const & > tuple) -> void
+			{
+				auto const & original = tuple.get<0>();
+				auto const & updated = tuple.get<1>();
+
+				std::map<query::schema::field, std::shared_ptr<query::var>> set;
+
+				for(size_t idx = 0; idx < fields.size(); ++idx)
+				{
+					auto field = fields.at(idx);
+					auto const & original_value = original.at(idx);
+					auto const & updated_value = updated.at(idx);
+
+					//if(nullptr != updated_value && *original_value != *updated_value)
+					if(nullptr != updated_value)
+						set.insert({field, updated_value});
+				}
+
+				if(set.size() > 0u)
+				{
+					webpp::query::query query = builder
+						.builder::set(set)
+						.builder::where(where_criterias.cbegin()->first, where_criterias.cbegin()->second);
+
+					std::unique_ptr<mysql::result> p_result;
+					connection.query(p_result, query);
+
+					return_value |= p_result->updated_rows() > 0;
+				}
+			}
+		);
+
+	return return_value;
 }
 
 bool model::insert(std::string table_name, row_list_type rows)
 {
 	webpp::query::query query = query_builder()
 		.insert(table_name)
-		.builder::values(rows)
-		;
+	.builder::values(rows)
+	;
 
 	std::unique_ptr<mysql::result> p_result;
 	mp_impl->p_connection->query(p_result, query);

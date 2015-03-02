@@ -126,7 +126,7 @@ Ensure(query, update)
 	assert_that(literal.c_str(),
 			is_equal_to_string(
 				"update `peoples`"
-				" set `is_enabled` = true"
+				" set `is_enabled` = 'true'"
 				" where `id` = 2"
 				));
 }

@@ -1,6 +1,7 @@
 
 #include "json.hpp"
 #include "query_var.hpp"
+#include "query_schema.hpp"
 #include "mysql_result.hpp"
 #include "convert_rows_to_json.hpp"
 
@@ -70,7 +71,7 @@ json::array & cast(json::array & array
 			std::unique_ptr<json::value> p_jv;
 
 			converter.convert(p_jv, *p_value);
-			json::add_property(*p_object, field, p_jv);
+			json::add_property(*p_object, field.name(), p_jv);
 		}
 
 		json::add(array, p_object);
