@@ -10,6 +10,34 @@
 
 namespace webpp { namespace mysql {
 
+class converter
+	: public query::visitor
+{
+	std::string m_literal;
+	public:
+		converter(std::string const & literal)
+			: m_literal {literal} { }
+
+		virtual void visit(query::boolean & v)
+		{
+			throw "Not supported";
+		}
+
+		virtual void visit(query::integer & v)
+		{
+			v.set(std::atoi(m_literal.c_str()));
+		}
+
+		virtual void visit(query::string & v)
+		{
+			v.set(m_literal);
+		}
+
+		virtual ~converter()
+		{
+		}
+};
+
 struct connection::impl
 {
 	MYSQL * p_mysql;
@@ -53,8 +81,10 @@ void connection::connect(std::string const host
 		throw mysql_error(mp_impl->p_mysql);
 }
 
-void connection::query(std::unique_ptr<result> & p_result, std::string const query)
+void connection::query(std::unique_ptr<result> & p_result, webpp::query::query const & q)
 {
+	std::string query = q.str();
+
 	if(mysql_query(mp_impl->p_mysql, query.c_str()))
 		throw mysql_error(mp_impl->p_mysql);
 
@@ -73,7 +103,39 @@ void connection::query(std::unique_ptr<result> & p_result, std::string const que
 
 		result::field_list_type field_list;
 		while(MYSQL_FIELD * field = mysql_fetch_field(p_native_result))
-			field_list.push_back({field->name, field->type});
+		{
+			auto p_field = std::make_shared<query::schema::field>(field->name);
+
+			switch(field->type)
+			{
+				case MYSQL_TYPE_DECIMAL:
+				case MYSQL_TYPE_TINY:
+				case MYSQL_TYPE_SHORT:
+				case MYSQL_TYPE_LONG:
+				case MYSQL_TYPE_LONGLONG:
+				case MYSQL_TYPE_INT24:
+					p_field->of_type<query::integer>();
+					break;
+				case MYSQL_TYPE_NULL:
+					p_field->of_type<query::string>();
+					break;
+
+				// MYSQL_TYPE_FLOAT
+				// MYSQL_TYPE_DOUBLE
+				// MYSQL_TYPE_TIMESTAMP
+				// MYSQL_TYPE_DATE
+				// MYSQL_TYPE_TIME
+				// MYSQL_TYPE_DATETIME
+				// MYSQL_TYPE_YEAR
+				// MYSQL_TYPE_NEWDATE
+				// MYSQL_TYPE_VARCHAR
+				// MYSQL_TYPE_BIT
+				default:
+					p_field->of_type<query::string>();
+			}
+
+			field_list.push_back(p_field);
+		}
 
 		result::row_list_type rows;
 
@@ -83,39 +145,16 @@ void connection::query(std::unique_ptr<result> & p_result, std::string const que
 
 			for(size_t row_idx = 0; row_idx < field_list.size(); ++row_idx)
 			{
-				std::string const & field_name {field_list[row_idx].first};
-				enum enum_field_types const & field_type {field_list[row_idx].second};
+				std::shared_ptr<query::var> p_value;
+				field_list[row_idx]->clone(p_value);
 
-				if(NULL == row[row_idx])
-					row_[field_name] = std::make_shared<query::string>();
-				else
-					switch(field_type)
-					{
-						case MYSQL_TYPE_DECIMAL:
-						case MYSQL_TYPE_TINY:
-						case MYSQL_TYPE_SHORT:
-						case MYSQL_TYPE_LONG:
-						case MYSQL_TYPE_LONGLONG:
-						case MYSQL_TYPE_INT24:
-							row_[field_name] = std::make_shared<query::integer>(row[row_idx]);
-							break;
-						case MYSQL_TYPE_NULL:
-							row_[field_name] = std::make_shared<query::string>();
-							break;
+				if(NULL != row[row_idx])
+				{
+					converter c {row[row_idx]};
+					p_value->accept(c);
+				}
 
-						// MYSQL_TYPE_FLOAT
-						// MYSQL_TYPE_DOUBLE
-						// MYSQL_TYPE_TIMESTAMP
-						// MYSQL_TYPE_DATE
-						// MYSQL_TYPE_TIME
-						// MYSQL_TYPE_DATETIME
-						// MYSQL_TYPE_YEAR
-						// MYSQL_TYPE_NEWDATE
-						// MYSQL_TYPE_VARCHAR
-						// MYSQL_TYPE_BIT
-						default:
-							row_[field_name] = std::make_shared<query::string>(row[row_idx]);
-					}
+				row_.push_back(std::move(p_value));
 			}
 
 			rows.push_back(row_);

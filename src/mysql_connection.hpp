@@ -34,7 +34,8 @@ class connection
 			, unsigned const port
 			);
 
-	void query(std::unique_ptr<result> & p_result, std::string const query);
+	void query(std::unique_ptr<result> & p_result, webpp::query::query const & query);
+	//void query(std::unique_ptr<result> & p_result, std::string const query);
 };
 
 } } // namespace webpp::mysql

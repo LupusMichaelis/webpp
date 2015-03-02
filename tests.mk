@@ -69,7 +69,11 @@ tests/test_json.so: src/json_parser.o src/json.o tests/test_json.o
 tests/test_model: tests/test_model.so
 	$(UNITTESTER) $^
 
-tests/test_model.so: src/model.o src/json.o src/json_parser.o src/mysql_connection.o src/mysql_result.o src/query_var.o tests/test_model.o
+tests/test_model.so: src/model.o \
+		src/json.o src/json_parser.o \
+		src/mysql_connection.o src/mysql_result.o \
+		src/query.o src/query_var.o src/query_builder.o src/query_clause.o \
+		tests/test_model.o
 	$(CXX) -shared -Wl,-soname,$@ -o $@ $^ $(LDFLAGS) -fPIC
 
 %.o: %.cpp

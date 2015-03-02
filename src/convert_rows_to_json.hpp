@@ -1,6 +1,8 @@
 #ifndef  HPP_JSON_MY_WEBPP
 #	define  HPP_JSON_MY_WEBPP
 
+#	include "model.hpp"
+
 namespace webpp
 {
 
@@ -17,7 +19,7 @@ class array;
 }
 
 class convert_mysql_to_json
-	: public mysql::visitor
+	: public query::visitor
 {
 	std::unique_ptr<json::value> mp_yield;
 
@@ -27,16 +29,18 @@ class convert_mysql_to_json
 		void convert(std::unique_ptr<json::value> & p_jv, query::var & v);
 		void yield_null();
 
-		virtual void visit(mysql::boolean & v);
-		virtual void visit(mysql::integer & v);
-		virtual void visit(mysql::string & v);
+		virtual void visit(query::boolean & v);
+		virtual void visit(query::integer & v);
+		virtual void visit(query::string & v);
 		virtual ~convert_mysql_to_json();
 };
 
+json::array & cast(webpp::json::array & array
+		, webpp::model::field_list_type & fields
+		, webpp::model::row_list_type & rows
+		);
+
 }; // namespace webpp
 
-#	include "model.hpp"
-
-webpp::json::array & operator << (webpp::json::array & array, webpp::model::row_list_type & result);
 
 #endif //  HPP_JSON_MY_WEBPP

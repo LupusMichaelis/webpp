@@ -17,7 +17,7 @@ void convert_mysql_to_json::convert(std::unique_ptr<json::value> & p_jv, query::
 	std::swap(mp_yield, p_jv);
 }
 
-void convert_mysql_to_json::visit(mysql::boolean & v)
+void convert_mysql_to_json::visit(query::boolean & v)
 {
 	if(nullptr == v)
 		yield_null();
@@ -25,7 +25,7 @@ void convert_mysql_to_json::visit(mysql::boolean & v)
 		json::build<json::boolean, bool>(mp_yield, bool(v));
 }
 
-void convert_mysql_to_json::visit(mysql::integer & v)
+void convert_mysql_to_json::visit(query::integer & v)
 {
 	if(nullptr == v)
 		yield_null();
@@ -33,7 +33,7 @@ void convert_mysql_to_json::visit(mysql::integer & v)
 		json::build<json::number, long long>(mp_yield, v.get());
 }
 
-void convert_mysql_to_json::visit(mysql::string & v)
+void convert_mysql_to_json::visit(query::string & v)
 {
 	if(nullptr == v)
 		yield_null();
@@ -50,27 +50,34 @@ convert_mysql_to_json::~convert_mysql_to_json()
 {
 }
 
-} // namespace webpp
-
-webpp::json::array & operator << (webpp::json::array & array, webpp::model::row_list_type & rows)
+json::array & cast(json::array & array
+		, model::field_list_type & fields
+		, model::row_list_type & rows
+		)
 {
-	webpp::convert_mysql_to_json converter;
+	convert_mysql_to_json converter;
 
 	for(auto & row: rows)
 	{
-		std::unique_ptr<webpp::json::object> p_object;
-		webpp::json::build(p_object);
+		std::unique_ptr<json::object> p_object;
+		json::build(p_object);
 
-		for(auto & field: row)
+		for(size_t idx = 0; idx < fields.size(); ++idx)
 		{
-			std::unique_ptr<webpp::json::value> p_jv;
+			auto p_value = row[idx];
+			auto field = fields[idx];
 
-			converter.convert(p_jv, *field.second);
-			webpp::json::add_property(*p_object, field.first, p_jv);
+			std::unique_ptr<json::value> p_jv;
+
+			converter.convert(p_jv, *p_value);
+			json::add_property(*p_object, field, p_jv);
 		}
 
-		webpp::json::add(array, p_object);
+		json::add(array, p_object);
 	}
 
 	return array;
 }
+
+} // namespace webpp
+

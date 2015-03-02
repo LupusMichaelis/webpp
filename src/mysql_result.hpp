@@ -9,6 +9,10 @@
 #	include <string>
 #	include <mysql.h>
 
+namespace webpp { namespace query { namespace schema {
+class field;
+} } } // namespace webpp::query::schema
+
 namespace webpp { namespace mysql {
 
 class result
@@ -17,11 +21,16 @@ class result
 	std::unique_ptr<impl> mp_impl;
 
 	public:
-		typedef std::map<std::string, std::shared_ptr<query::var>>
-											row_type;
-		typedef std::vector<row_type>		row_list_type;
-		typedef std::vector<std::pair<std::string, enum enum_field_types>>
-											field_list_type;
+		typedef std::vector<std::shared_ptr<query::schema::field>>
+													field_list_type;
+
+		typedef std::vector<std::shared_ptr<query::var>>
+													row_type;
+		typedef std::vector<row_type>				row_list_type;
+
+		typedef std::map<query::schema::field, std::shared_ptr<query::var>>
+													criteria_type;
+		typedef std::vector<criteria_type>			criteria_list_type;
 
 		result();
 		~result();
