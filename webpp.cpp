@@ -135,17 +135,14 @@ int main()
 	p_con->connect("localhost", "test", "test", "test", 3308);
 	m.connection(p_con);
 
+	m.get_by_criterias(p_fields, p_rows, table_name, criterias);
+
 	if("GET" == request.method())
-	{
-		m.get_by_criterias(p_fields, p_rows, table_name, criterias);
 		print_json(std::cout, *p_fields, *p_rows);
-	}
 	else if("POST" == request.method())
 	{
 		std::unique_ptr<webpp::model::criteria_list_type> p_submitted;
 		json_extract(p_submitted, std::cin);
-
-		m.get_by_criterias(p_fields, p_rows, table_name, criterias);
 
 		webpp::model::row_list_type updated_rows;
 		for(auto row: *p_rows)
@@ -163,13 +160,6 @@ int main()
 		}
 
 		m.update(table_name, *p_fields, *p_rows, updated_rows, criterias);
-	}
-	else if("PUT" == request.method())
-	{
-		std::unique_ptr<webpp::model::criteria_list_type> p_submitted;
-		json_extract(p_submitted, std::cin);
-
-		m.replace(table_name, *p_changes);
 	}
 	else
 	{

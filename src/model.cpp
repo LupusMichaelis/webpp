@@ -192,17 +192,4 @@ bool model::insert(std::string table_name, row_list_type rows)
 	return p_result->updated_rows() > 0;
 }
 
-bool model::replace(std::string table_name, row_type row)
-{
-	webpp::query::query query = query_builder()
-		.replace(table_name)
-		.builder::values(std::vector<row_type>{row})
-		;
-
-	std::unique_ptr<mysql::result> p_result;
-	mp_impl->p_connection->query(p_result, query);
-
-	return p_result->updated_rows() > 0;
-}
-
 } // webpp

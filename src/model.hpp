@@ -67,9 +67,6 @@ class model
 		bool insert(std::string table_name
 				, row_list_type rows
 				);
-		bool replace(std::string table_name
-				, row_type row
-				);
 };
 
 } // webpp
