@@ -2,7 +2,7 @@
 #include "query_builder.hpp"
 #include "query.hpp"
 
-#include <algorithm>
+#include "algorithm.hpp"
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -56,9 +56,7 @@ builder::~builder()
 builder::operator query() const
 {
 	query q{mp_impl->m_escaper};
-	std::for_each(mp_impl->m_clause_list.cbegin()
-		, mp_impl->m_clause_list.cend()
-		, std::ref(q));
+	std::for_each(mp_impl->m_clause_list, std::ref(q));
 	return q;
 }
 
