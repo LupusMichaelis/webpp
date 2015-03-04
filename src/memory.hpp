@@ -1,5 +1,5 @@
-#ifndef HPP_TOOLS_QUEST
-#	define HPP_TOOLS_QUEST
+#ifndef HPP_MEMORY_WEBPP
+#	define HPP_MEMORY_WEBPP
 
 #	include <memory>
 
@@ -34,4 +34,4 @@ T & get_or_throw(std::shared_ptr<T> const & sptr)
 	return *sptr ;
 }
 
-#endif // HPP_TOOLS_QUEST
+#endif // HPP_MEMORY_WEBPP
