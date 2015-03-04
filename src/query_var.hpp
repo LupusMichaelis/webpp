@@ -51,8 +51,8 @@ class var
 		virtual operator bool() const;
 
 		virtual var & operator=(std::nullptr_t);
-		virtual bool operator ==(std::nullptr_t) const;
-		virtual bool operator ==(var const & rhs) const;
+
+		bool operator ==(std::nullptr_t) const;
 
 		virtual void accept(const_visitor & v) const = 0;
 		virtual void accept(visitor & v) = 0;
@@ -75,17 +75,9 @@ class string
 		virtual std::string const & get() const;
 		virtual void set(std::string const & new_value);
 
-		//using var::operator ==;
-		virtual bool operator ==(var const & rhs) const
-		{
-			return var::operator ==(rhs);
-		}
-		virtual bool operator ==(string const & rhs) const;
-		virtual bool operator ==(std::nullptr_t) const
-		{
-			return var::operator ==(nullptr);
-		}
-		virtual bool operator ==(std::string const & rhs) const;
+		using var::operator ==;
+		bool operator ==(string const & rhs) const;
+		bool operator ==(std::string const & rhs) const;
 
 		virtual void accept(visitor & v);
 		virtual void accept(const_visitor & v) const;
@@ -110,13 +102,9 @@ class integer
 		virtual long long const & get() const;
 		virtual void set(long long const new_value);
 
-		//using var::operator ==;
-		virtual bool operator ==(integer const & rhs) const;
-		virtual bool operator ==(std::nullptr_t) const
-		{
-			return var::operator ==(nullptr);
-		}
-		virtual bool operator ==(long long const rhs) const;
+		using var::operator ==;
+		bool operator ==(integer const & rhs) const;
+		bool operator ==(long long const rhs) const;
 
 		virtual void accept(visitor & v);
 		virtual void accept(const_visitor & v) const;
@@ -139,13 +127,9 @@ class boolean
 
 		virtual operator bool() const;
 
-		//using var::operator ==;
-		virtual bool operator ==(boolean const & rhs) const;
-		virtual bool operator ==(std::nullptr_t) const
-		{
-			return var::operator ==(nullptr);
-		}
-		virtual bool operator ==(bool const rhs) const;
+		using var::operator ==;
+		bool operator ==(boolean const & rhs) const;
+		bool operator ==(bool const rhs) const;
 
 		virtual void accept(visitor & v);
 		virtual void accept(const_visitor & v) const;
@@ -158,6 +142,8 @@ void build(std::shared_ptr<var> & p_node)
 {
 	p_node = std::move(std::make_shared<value_type>());
 }
+
+} } // namespace webpp::query
 
 inline bool operator !=(webpp::query::var const & lhs, std::nullptr_t)
 {
@@ -174,11 +160,6 @@ inline bool operator ==(std::nullptr_t, webpp::query::var const & rhs)
 	return rhs == nullptr;
 }
 
-inline bool operator ==(std::string const & lhs, webpp::query::var const & rhs)
-{
-	// XXX the dynamic_cast avoid the cast issue when rhs is webpp::query::string
-	return dynamic_cast<webpp::query::string const &>(rhs).get() == lhs;
-}
+bool operator ==(std::string const & lhs, webpp::query::var const & rhs);
 
-} } // namespace webpp::query
 #endif // HPP_VAR_QUERY_WEBPP

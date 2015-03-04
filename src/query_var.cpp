@@ -18,6 +18,105 @@ const_visitor::~const_visitor()
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// Comparison //////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+template <typename former_type, typename latter_type>
+struct compare_traits
+{
+	static void constraint()
+	{
+		former_type former;
+		latter_type latter;
+
+		var * p_former = &former;
+		var * p_latter = &latter;
+
+		(void) former, latter;
+	}
+
+	static bool const equals(former_type const & former, latter_type const & latter)
+	{
+		return false;
+	}
+
+	static bool const greater_than(former_type const & former, latter_type const & latter)
+	{
+		return false;
+	}
+
+	static bool const lower_than(former_type const & former, latter_type const & latter)
+	{
+		return true;
+	}
+};
+
+template<>
+struct compare_traits<string, string>
+{
+	static bool const equals(string const & former, string const & latter)
+	{
+		return former.get() == latter.get();
+	}
+
+	static bool const greater_than(string const & former, string const & latter)
+	{
+		return former.get() > latter.get();
+	}
+
+	static bool const lower_than(string const & former, string const & latter)
+	{
+		return former.get() < latter.get();
+	}
+};
+
+template<typename previous_clause_type>
+struct comparator
+	: public const_visitor
+{
+	previous_clause_type const & m_former;
+	bool m_equals;
+
+	explicit comparator(previous_clause_type const & lhs)
+		: m_former(lhs)
+		, m_equals(false)
+	{ }
+
+	explicit comparator(var const & lhs)
+		: m_former(dynamic_cast<previous_clause_type const &>(lhs))
+		, m_equals(false)
+	{ }
+
+	~comparator() { };
+
+	template<typename next_clause_type>
+	void equals(next_clause_type const & latter)
+	{
+		typedef compare_traits<previous_clause_type, next_clause_type> comparator_traits;
+		m_equals = comparator_traits::equals(m_former, latter);
+	}
+
+	virtual void equals(var const & value)			{ value.accept(*this); }
+	virtual void visit(boolean const & value)		{ equals<>(value); }
+	virtual void visit(integer const & value)		{ equals<>(value); }
+	virtual void visit(string const & value)		{ equals<>(value); }
+
+	operator bool() { return m_equals; }
+};
+
+bool operator ==(string const & lhs, webpp::query::var const & rhs)
+{
+	auto c = comparator<string>(lhs);
+	c.equals(rhs);
+	return c;
+}
+
+bool operator ==(std::string const & lhs, webpp::query::var const & rhs)
+{
+	auto const converted = webpp::query::string {lhs};
+	return operator ==(converted, rhs);
+}
+
+////////////////////////////////////////////////////////////////////////////////
 // class var ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 struct var::impl
@@ -67,11 +166,6 @@ var & var::operator =(std::nullptr_t)
 bool var::operator ==(std::nullptr_t) const
 {
 	return mp_impl->is_null;
-}
-
-bool var::operator ==(var const & rhs) const
-{
-	return nullptr == *this and nullptr == rhs;
 }
 
 var::operator bool() const
@@ -124,8 +218,8 @@ void string::set(std::string const & new_value)
 
 bool string::operator ==(string const & rhs) const
 {
-	return var::operator ==(rhs)
-		or (m_value == rhs.m_value);
+	return (nullptr == *this and nullptr == rhs)
+		or *this == rhs.m_value;
 }
 
 bool string::operator ==(std::string const & rhs) const
@@ -204,7 +298,8 @@ bool integer::operator ==(long long const rhs) const
 
 bool integer::operator ==(integer const & rhs) const
 {
-	return var::operator ==(rhs) or *this == rhs.m_value;
+	return (nullptr == *this and nullptr == rhs)
+		or *this == rhs.m_value;
 }
 
 void integer::accept(visitor & v)
@@ -275,7 +370,8 @@ bool boolean::operator ==(bool const rhs) const
 
 bool boolean::operator ==(boolean const & rhs) const
 {
-	return var::operator ==(rhs) or *this == rhs.m_value;
+	return (nullptr != *this and nullptr != rhs)
+		or *this == rhs.m_value;
 }
 
 void boolean::accept(visitor & v)
