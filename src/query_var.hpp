@@ -143,7 +143,7 @@ void build(std::shared_ptr<var> & p_node)
 	p_node = std::move(std::make_shared<value_type>());
 }
 
-} } // namespace webpp::query
+namespace comparison {
 
 inline bool operator !=(webpp::query::var const & lhs, std::nullptr_t)
 {
@@ -161,5 +161,9 @@ inline bool operator ==(std::nullptr_t, webpp::query::var const & rhs)
 }
 
 bool operator ==(std::string const & lhs, webpp::query::var const & rhs);
+
+} // namespace comparison
+
+} } // namespace webpp::query
 
 #endif // HPP_VAR_QUERY_WEBPP

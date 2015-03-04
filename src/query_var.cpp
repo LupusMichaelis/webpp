@@ -9,6 +9,8 @@
 
 namespace webpp { namespace query {
 
+using namespace comparison;
+
 visitor::~visitor()
 {
 }
@@ -103,6 +105,8 @@ struct comparator
 	operator bool() { return m_equals; }
 };
 
+namespace comparison {
+
 bool operator ==(string const & lhs, webpp::query::var const & rhs)
 {
 	auto c = comparator<string>(lhs);
@@ -115,6 +119,8 @@ bool operator ==(std::string const & lhs, webpp::query::var const & rhs)
 	auto const converted = webpp::query::string {lhs};
 	return operator ==(converted, rhs);
 }
+
+} // namespace comparison
 
 ////////////////////////////////////////////////////////////////////////////////
 // class var ///////////////////////////////////////////////////////////////////

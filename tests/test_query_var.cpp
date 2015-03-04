@@ -8,6 +8,7 @@
 namespace {
 
 using namespace webpp::query;
+using namespace webpp::query::comparison;
 
 class printer
 	: public const_visitor
@@ -23,13 +24,13 @@ class printer
 			if(nullptr == v)
 				m_out << "null";
 			else
-				m_out << (v ? "true" : "false");
+				m_out << (v ? "TRUE" : "FALSe");
 		}
 
 		virtual void visit(string const & v)
 		{
 			if(nullptr == v)
-				m_out << "null";
+				m_out << "NULL";
 			else
 				m_out << v.get();
 		}
@@ -37,7 +38,7 @@ class printer
 		virtual void visit(integer const & v)
 		{
 			if(nullptr == v)
-				m_out << "null";
+				m_out << "NULL";
 			else
 				m_out << v.get();
 		}
@@ -73,7 +74,7 @@ Ensure(mysql_var, null_object_is_null)
 	std::string extract;
 	s >> extract;
 
-	assert_that(extract.c_str(), is_equal_to_string("null"));
+	assert_that(extract.c_str(), is_equal_to_string("NULL"));
 }
 
 Ensure(mysql_var, visit_string)
