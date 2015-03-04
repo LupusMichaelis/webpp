@@ -10,6 +10,8 @@
 #include <boost/iterator/zip_iterator.hpp>
 #include <boost/algorithm/string/join.hpp>
 
+using namespace webpp::query::comparison;
+
 namespace webpp {
 
 class mysql_to_string:
@@ -34,7 +36,7 @@ class mysql_to_string:
 		{
 			if(nullptr == v)
 				yield_null();
-			else if(v)
+			else if(true == v)
 				m_yielded = "TRUE";
 			else
 				m_yielded = "FALSE";

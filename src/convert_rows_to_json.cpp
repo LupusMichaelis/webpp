@@ -5,6 +5,8 @@
 #include "mysql_result.hpp"
 #include "convert_rows_to_json.hpp"
 
+using namespace webpp::query::comparison;
+
 namespace webpp {
 
 convert_mysql_to_json::convert_mysql_to_json()
@@ -23,7 +25,7 @@ void convert_mysql_to_json::visit(query::boolean & v)
 	if(nullptr == v)
 		yield_null();
 	else
-		json::build<json::boolean, bool>(mp_yield, bool(v));
+		json::build<json::boolean, bool>(mp_yield, true == v);
 }
 
 void convert_mysql_to_json::visit(query::integer & v)
