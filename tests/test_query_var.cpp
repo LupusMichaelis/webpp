@@ -9,7 +9,8 @@ namespace {
 
 using namespace webpp::query;
 
-class printer : public visitor
+class printer
+	: public const_visitor
 {
 	std::ostream & m_out;
 
@@ -17,7 +18,7 @@ class printer : public visitor
 		explicit printer(std::ostream & out)
 			: m_out(out) {};
 
-		virtual void visit(boolean & v)
+		virtual void visit(boolean const & v)
 		{
 			if(nullptr == v)
 				m_out << "null";
@@ -25,7 +26,7 @@ class printer : public visitor
 				m_out << (v ? "true" : "false");
 		}
 
-		virtual void visit(string & v)
+		virtual void visit(string const & v)
 		{
 			if(nullptr == v)
 				m_out << "null";
@@ -33,7 +34,7 @@ class printer : public visitor
 				m_out << v.get();
 		}
 
-		virtual void visit(integer & v)
+		virtual void visit(integer const & v)
 		{
 			if(nullptr == v)
 				m_out << "null";

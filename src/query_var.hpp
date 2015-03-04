@@ -23,6 +23,15 @@ class visitor
 		virtual ~visitor();
 };
 
+class const_visitor
+{
+	public:
+		virtual void visit(boolean const & v) = 0;
+		virtual void visit(integer const & v) = 0;
+		virtual void visit(string const & v) = 0;
+		virtual ~const_visitor();
+};
+
 class var
 {
 	struct impl;
@@ -45,8 +54,9 @@ class var
 		virtual bool operator ==(std::nullptr_t) const;
 		virtual bool operator ==(var const & rhs) const;
 
+		virtual void accept(const_visitor & v) const = 0;
 		virtual void accept(visitor & v) = 0;
-		virtual void clone(std::shared_ptr<var> & p_v) = 0;
+		virtual void clone(std::shared_ptr<var> & p_v) const = 0;
 };
 
 class string
@@ -78,7 +88,8 @@ class string
 		virtual bool operator ==(std::string const & rhs) const;
 
 		virtual void accept(visitor & v);
-		virtual void clone(std::shared_ptr<var> & p_v);
+		virtual void accept(const_visitor & v) const;
+		virtual void clone(std::shared_ptr<var> & p_v) const;
 		virtual ~string();
 };
 
@@ -108,7 +119,8 @@ class integer
 		virtual bool operator ==(long long const rhs) const;
 
 		virtual void accept(visitor & v);
-		virtual void clone(std::shared_ptr<var> & p_v);
+		virtual void accept(const_visitor & v) const;
+		virtual void clone(std::shared_ptr<var> & p_v) const;
 		virtual ~integer();
 };
 
@@ -136,7 +148,8 @@ class boolean
 		virtual bool operator ==(bool const rhs) const;
 
 		virtual void accept(visitor & v);
-		virtual void clone(std::shared_ptr<var> & p_v);
+		virtual void accept(const_visitor & v) const;
+		virtual void clone(std::shared_ptr<var> & p_v) const;
 		virtual ~boolean();
 };
 
@@ -145,8 +158,6 @@ void build(std::shared_ptr<var> & p_node)
 {
 	p_node = std::move(std::make_shared<value_type>());
 }
-
-} } // namespace webpp::query
 
 inline bool operator !=(webpp::query::var const & lhs, std::nullptr_t)
 {
@@ -169,4 +180,5 @@ inline bool operator ==(std::string const & lhs, webpp::query::var const & rhs)
 	return dynamic_cast<webpp::query::string const &>(rhs).get() == lhs;
 }
 
+} } // namespace webpp::query
 #endif // HPP_VAR_QUERY_WEBPP

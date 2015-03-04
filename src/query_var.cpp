@@ -13,6 +13,10 @@ visitor::~visitor()
 {
 }
 
+const_visitor::~const_visitor()
+{
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // class var ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -134,7 +138,12 @@ void string::accept(visitor & v)
 	v.visit(*this);
 }
 
-void string::clone(std::shared_ptr<var> & p_v)
+void string::accept(const_visitor & v) const
+{
+	v.visit(*this);
+}
+
+void string::clone(std::shared_ptr<var> & p_v) const
 {
 	p_v = std::make_unique<string>(*this);
 }
@@ -203,7 +212,12 @@ void integer::accept(visitor & v)
 	v.visit(*this);
 }
 
-void integer::clone(std::shared_ptr<var> & p_v)
+void integer::accept(const_visitor & v) const
+{
+	v.visit(*this);
+}
+
+void integer::clone(std::shared_ptr<var> & p_v) const
 {
 	p_v = std::make_unique<integer>(*this);
 }
@@ -269,7 +283,12 @@ void boolean::accept(visitor & v)
 	v.visit(*this);
 }
 
-void boolean::clone(std::shared_ptr<var> & p_v)
+void boolean::accept(const_visitor & v) const
+{
+	v.visit(*this);
+}
+
+void boolean::clone(std::shared_ptr<var> & p_v) const
 {
 	p_v = std::make_unique<boolean>(*this);
 }
