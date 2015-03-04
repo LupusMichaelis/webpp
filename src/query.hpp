@@ -24,7 +24,7 @@ class query
 	std::unique_ptr<impl> mp_impl;
 
 	public:
-		query(escaper const & e);
+		explicit query(escaper const & e);
 		query(query const & rhs);
 		~query();
 

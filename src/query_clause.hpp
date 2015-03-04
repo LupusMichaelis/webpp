@@ -55,12 +55,6 @@ class visitor
 		virtual ~visitor() { };
 };
 
-template <typename former_type, typename latter_type>
-struct follows
-{
-	static bool const value = false;
-};
-
 class base
 {
 	public:
@@ -223,6 +217,12 @@ class set
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
 		virtual ~set();
+};
+
+template <typename former_type, typename latter_type>
+struct follows
+{
+	static bool const value = false;
 };
 
 template<> struct follows<select, fields> { static bool const value = true; };
