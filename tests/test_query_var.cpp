@@ -91,11 +91,36 @@ Ensure(mysql_var, visit_string)
 	assert_that(my_subject == subject, is_true);
 
 	std::stringstream s;
-	printer printer{s};
-	printer.visit(my_subject);
+	printer p{s};
+	p.visit(my_subject);
 
 	std::string extract;
 	s >> extract;
 
 	assert_that(extract.c_str(), is_equal_to_string(subject.c_str()));
+}
+
+Ensure(mysql_var, visit_boolean)
+{
+	webpp::query::boolean my_truth;
+	assert_that(my_truth == nullptr, is_true);
+	assert_that(nullptr == my_truth, is_true);
+
+	assert_that((bool) my_truth, is_false);
+	assert_that(true == my_truth, is_false);
+
+	my_truth = true;
+	assert_that(my_truth == nullptr, is_false);
+	assert_that(nullptr == my_truth, is_false);
+	assert_that((bool) my_truth, is_true);
+
+	std::string literal {"TRUE"};
+	std::stringstream s;
+	printer p{s};
+	p.visit(my_truth);
+
+	std::string extract;
+	s >> extract;
+
+	assert_that(extract.c_str(), is_equal_to_string(literal.c_str()));
 }
