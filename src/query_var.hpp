@@ -39,24 +39,25 @@ class var
 
 	protected:
 		void set_not_null();
+		void set_null();
 
 	public:
 
 		var();
-		virtual ~var();
 
 		var(var const & copied);
 		explicit var(std::nullptr_t);
-		virtual var & operator=(var const & copied);
-		virtual operator bool() const;
+		var & operator=(var const & copied);
+		var & operator=(std::nullptr_t);
 
-		virtual var & operator=(std::nullptr_t);
+		std::nullptr_t const get() const;
 
 		bool operator ==(std::nullptr_t) const;
 
 		virtual void accept(const_visitor & v) const = 0;
 		virtual void accept(visitor & v) = 0;
 		virtual void clone(std::shared_ptr<var> & p_v) const = 0;
+		virtual ~var();
 };
 
 class string
@@ -68,12 +69,11 @@ class string
 		string();
 		string(string const & copied);
 		explicit string(std::string const & copied);
-		virtual string & operator=(string const & copied);
+		string & operator=(string const & copied);
+		string & operator=(std::string const & copied);
 
-		virtual operator bool() const;
-
-		virtual std::string const & get() const;
-		virtual void set(std::string const & new_value);
+		std::string const & get() const;
+		void set(std::string const & new_value);
 
 		using var::operator ==;
 		bool operator ==(string const & rhs) const;
@@ -95,12 +95,11 @@ class integer
 		integer(integer const & copied);
 		explicit integer(std::string const & copied);
 		explicit integer(long long const copied);
-		virtual integer & operator=(integer const & copied);
+		using var::operator =;
+		integer & operator=(integer const & copied);
 
-		virtual operator bool() const;
-
-		virtual long long const & get() const;
-		virtual void set(long long const new_value);
+		long long const & get() const;
+		void set(long long const new_value);
 
 		using var::operator ==;
 		bool operator ==(integer const & rhs) const;
@@ -120,16 +119,16 @@ class boolean
 	public:
 		boolean();
 		boolean(boolean const & copied);
-		explicit boolean(std::string const & copied);
 		explicit boolean(bool const copied);
-		virtual boolean & operator=(boolean const & copied);
-		virtual boolean & operator=(bool const copied);
-
-		virtual operator bool() const;
+		using var::operator =;
+		boolean & operator=(boolean const & copied);
+		boolean & operator=(bool const copied);
 
 		using var::operator ==;
 		bool operator ==(boolean const & rhs) const;
 		bool operator ==(bool const rhs) const;
+
+		bool const get() const { return m_value; }
 
 		virtual void accept(visitor & v);
 		virtual void accept(const_visitor & v) const;
@@ -160,6 +159,10 @@ inline bool operator ==(std::nullptr_t, webpp::query::var const & rhs)
 	return rhs == nullptr;
 }
 
+bool operator ==(boolean const & lhs, webpp::query::var const & rhs);
+bool operator ==(string const & lhs, webpp::query::var const & rhs);
+
+bool operator ==(bool const & lhs, webpp::query::var const & rhs);
 bool operator ==(std::string const & lhs, webpp::query::var const & rhs);
 
 } // namespace comparison

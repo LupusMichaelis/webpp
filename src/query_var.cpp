@@ -9,8 +9,6 @@
 
 namespace webpp { namespace query {
 
-using namespace comparison;
-
 visitor::~visitor()
 {
 }
@@ -18,6 +16,8 @@ visitor::~visitor()
 const_visitor::~const_visitor()
 {
 }
+
+using namespace comparison;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Comparison //////////////////////////////////////////////////////////////////
@@ -33,43 +33,103 @@ struct compare_traits
 		var * p_former = &former;
 		var * p_latter = &latter;
 
-		(void) former, latter;
+		(void) p_former, p_latter; // silent compiler warnings
 	}
 
 	static bool const equals(former_type const & former, latter_type const & latter)
 	{
-		return false;
+		return (nullptr == former and nullptr == latter)
+			or (nullptr != former and nullptr != latter
+					and former.operator ==(latter));
 	}
 
+	/*
 	static bool const greater_than(former_type const & former, latter_type const & latter)
 	{
-		return false;
+		return nullptr != former and nullptr == latter;
 	}
 
 	static bool const lower_than(former_type const & former, latter_type const & latter)
 	{
-		return true;
+		return nullptr == former and nullptr != latter;
+	}
+	*/
+};
+
+template<>
+struct compare_traits<string, boolean>
+{
+	static bool const equals(string const & former, boolean const & latter)
+	{
+		return nullptr == former and nullptr == latter;
 	}
 };
 
 template<>
-struct compare_traits<string, string>
+struct compare_traits<string, integer>
 {
-	static bool const equals(string const & former, string const & latter)
+	static bool const equals(string const & former, integer const & latter)
+	{
+		return nullptr == former and nullptr == latter;
+	}
+};
+
+template<>
+struct compare_traits<integer, boolean>
+{
+	static bool const equals(integer const & former, boolean const & latter)
+	{
+		return nullptr == former and nullptr == latter;
+	}
+};
+
+template<>
+struct compare_traits<integer, string>
+{
+	static bool const equals(integer const & former, string const & latter)
+	{
+		return nullptr == former and nullptr == latter;
+	}
+};
+
+template<>
+struct compare_traits<boolean, integer>
+{
+	static bool const equals(boolean const & former, integer const & latter)
+	{
+		return nullptr == former and nullptr == latter;
+	}
+};
+
+template<>
+struct compare_traits<boolean, string>
+{
+	static bool const equals(boolean const & former, string const & latter)
+	{
+		return nullptr == former and nullptr == latter;
+	}
+};
+
+/*
+template<>
+struct compare_traits<boolean, boolean>
+{
+	static bool const equals(boolean const & former, boolean const & latter)
 	{
 		return former.get() == latter.get();
 	}
 
-	static bool const greater_than(string const & former, string const & latter)
+	static bool const greater_than(boolean const & former, boolean const & latter)
 	{
 		return former.get() > latter.get();
 	}
 
-	static bool const lower_than(string const & former, string const & latter)
+	static bool const lower_than(boolean const & former, boolean const & latter)
 	{
 		return former.get() < latter.get();
 	}
 };
+*/
 
 template<typename previous_clause_type>
 struct comparator
@@ -80,11 +140,6 @@ struct comparator
 
 	explicit comparator(previous_clause_type const & lhs)
 		: m_former(lhs)
-		, m_equals(false)
-	{ }
-
-	explicit comparator(var const & lhs)
-		: m_former(dynamic_cast<previous_clause_type const &>(lhs))
 		, m_equals(false)
 	{ }
 
@@ -114,9 +169,22 @@ bool operator ==(string const & lhs, webpp::query::var const & rhs)
 	return c;
 }
 
+bool operator ==(boolean const & lhs, webpp::query::var const & rhs)
+{
+	auto c = comparator<boolean>(lhs);
+	c.equals(rhs);
+	return c;
+}
+
 bool operator ==(std::string const & lhs, webpp::query::var const & rhs)
 {
 	auto const converted = webpp::query::string {lhs};
+	return operator ==(converted, rhs);
+}
+
+bool operator ==(bool const & lhs, webpp::query::var const & rhs)
+{
+	auto const converted = webpp::query::boolean {lhs};
 	return operator ==(converted, rhs);
 }
 
@@ -156,6 +224,11 @@ void var::set_not_null()
 	mp_impl->is_null = false;
 }
 
+void var::set_null()
+{
+	mp_impl->is_null = true;
+}
+
 var & var::operator =(var const & copied)
 {
 	auto p_impl = std::make_unique<impl>(*copied.mp_impl);
@@ -165,7 +238,7 @@ var & var::operator =(var const & copied)
 
 var & var::operator =(std::nullptr_t)
 {
-	mp_impl->is_null = true;
+	set_null();
 	return *this;
 }
 
@@ -174,16 +247,18 @@ bool var::operator ==(std::nullptr_t) const
 	return mp_impl->is_null;
 }
 
+/*
 var::operator bool() const
 {
 	return !mp_impl->is_null;
 }
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 // class string ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 string::string()
-	: m_value {}
+	: var {}, m_value {}
 {
 }
 
@@ -193,20 +268,24 @@ string::string(string const & copied)
 }
 
 string::string(std::string const & copied)
-	: var(), m_value {copied}
+	: var {}, m_value {copied}
 {
 	set_not_null();
-}
-
-string::operator bool() const
-{
-	return var::operator bool() or !m_value.empty();
 }
 
 string & string::operator=(string const & copied)
 {
-	set_not_null();
-	m_value = copied;
+	if(nullptr == copied)
+		*this = nullptr;
+	else
+		set(copied.get());
+
+	return *this;
+}
+
+string & string::operator=(std::string const & copied)
+{
+	set(copied);
 
 	return *this;
 }
@@ -256,12 +335,12 @@ string::~string()
 // class integer ///////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 integer::integer()
-	: m_value()
+	: var {}, m_value()
 {
 }
 
 integer::integer(integer const & copied)
-	: m_value(copied.m_value)
+	: var{copied}, m_value(copied.m_value)
 {
 }
 
@@ -271,7 +350,7 @@ integer::integer(std::string const & copied)
 }
 
 integer::integer(long long const copied)
-	: m_value(copied)
+	: var {}, m_value(copied)
 {
 }
 
@@ -281,10 +360,6 @@ integer & integer::operator=(integer const & copied)
 	return *this;
 }
 
-integer::operator bool() const
-{
-	return nullptr != *this and m_value;
-}
 
 long long const & integer::get() const
 {
@@ -331,34 +406,25 @@ integer::~integer()
 // class boolean ///////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 boolean::boolean()
-	: m_value()
+	: var {}, m_value()
 {
 }
 
 boolean::boolean(boolean const & copied)
-	: m_value(copied.m_value)
-{
-}
-
-boolean::boolean(std::string const & copied)
-	: boolean(copied == "true" ? true : false)
+	:  var {copied}, m_value(copied.m_value)
 {
 }
 
 boolean::boolean(bool const copied)
-	: m_value(copied)
+	: var {}, m_value(copied)
 {
+	set_not_null();
 }
 
 boolean & boolean::operator=(boolean const & copied)
 {
 	m_value = copied.m_value;
 	return *this;
-}
-
-boolean::operator bool() const
-{
-	return nullptr != *this and m_value;
 }
 
 boolean & boolean::operator =(bool const new_value)
@@ -371,7 +437,7 @@ boolean & boolean::operator =(bool const new_value)
 
 bool boolean::operator ==(bool const rhs) const
 {
-	return nullptr != *this or (m_value and rhs);
+	return nullptr != *this and m_value == rhs;
 }
 
 bool boolean::operator ==(boolean const & rhs) const
