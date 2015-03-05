@@ -137,7 +137,7 @@ void replace::accept(visitor & v)
 }
 
 // values /////////////////////////////////////////////////////////////////////
-values::values(std::vector<std::vector<std::shared_ptr<var>>> value_list)
+values::values(std::vector<std::vector<std::shared_ptr<value>>> value_list)
 	: m_value_list {value_list}
 { }
 
@@ -149,7 +149,7 @@ void values::clone(std::unique_ptr<base> & p_cloned)
 	std::swap(p_cloned, p_clonee);
 }
 
-std::vector<std::vector<std::shared_ptr<var>>> const & values::value_list() const
+std::vector<std::vector<std::shared_ptr<value>>> const & values::value_list() const
 {
 	return m_value_list;
 }
@@ -183,7 +183,7 @@ void from::accept(visitor & v)
 }
 
 // where //////////////////////////////////////////////////////////////////////
-where::where(schema::field lhs, std::shared_ptr<var> p_rhs)
+where::where(schema::field lhs, std::shared_ptr<value> p_rhs)
 	: m_lhs {lhs}
 	, mp_rhs {p_rhs}
 { }
@@ -195,7 +195,7 @@ schema::field const & where::lhs() const
 	return m_lhs;
 }
 
-var const & where::rhs() const
+value const & where::rhs() const
 {
 	return *mp_rhs;
 }
@@ -252,17 +252,17 @@ update::~update()
 }
 
 // set ////////////////////////////////////////////////////////////////////////
-set::set(std::map<schema::field, std::shared_ptr<var>> field_value_pair_list)
+set::set(std::map<schema::field, std::shared_ptr<value>> field_value_pair_list)
 	: m_field_list { field_value_pair_list }
 {
 }
 
-set::set(schema::field field, std::shared_ptr<var> value)
+set::set(schema::field field, std::shared_ptr<value> value)
 	: set {{{field, value}}}
 {
 }
 
-std::map<schema::field, std::shared_ptr<var>> const & set::field_value_pair_list()
+std::map<schema::field, std::shared_ptr<value>> const & set::field_value_pair_list()
 {
 	return m_field_list;
 }

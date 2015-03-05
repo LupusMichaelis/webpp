@@ -14,7 +14,7 @@ convert_mysql_to_json::convert_mysql_to_json()
 {
 }
 
-void convert_mysql_to_json::convert(std::unique_ptr<json::value> & p_jv, query::var & v)
+void convert_mysql_to_json::convert(std::unique_ptr<json::value> & p_jv, query::value & v)
 {
 	v.accept(*this);
 	std::swap(mp_yield, p_jv);

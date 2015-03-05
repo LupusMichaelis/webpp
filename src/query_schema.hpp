@@ -33,7 +33,7 @@ class table
 class field
 {
 	std::string m_name;
-	std::shared_ptr<var> mp_prototype;
+	std::shared_ptr<value> mp_prototype;
 
 	public:
 		explicit field(std::string name)
@@ -56,13 +56,13 @@ class field
 			return name() < rhs.name();
 		}
 
-		template<typename query_var_type>
+		template<typename query_value_type>
 		void of_type()
 		{
-			build<query_var_type>(mp_prototype);
+			build<query_value_type>(mp_prototype);
 		}
 
-		void clone(std::shared_ptr<var> & p_clonee) const
+		void clone(std::shared_ptr<value> & p_clonee) const
 		{
 			mp_prototype->clone(p_clonee);
 		}

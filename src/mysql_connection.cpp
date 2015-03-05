@@ -145,7 +145,7 @@ void connection::query(std::unique_ptr<result> & p_result, webpp::query::query c
 
 			for(size_t row_idx = 0; row_idx < field_list.size(); ++row_idx)
 			{
-				std::shared_ptr<query::var> p_value;
+				std::shared_ptr<query::value> p_value;
 				field_list[row_idx]->clone(p_value);
 
 				if(NULL != row[row_idx])

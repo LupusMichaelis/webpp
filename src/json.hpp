@@ -71,7 +71,8 @@ class visitor
 		virtual ~visitor();
 };
 
-class print : public visitor
+class print
+	: public visitor
 {
 	struct impl;
 	std::unique_ptr<impl> mp_impl;
@@ -151,7 +152,8 @@ void add(array & self, std::string const key, array const array_value);
 
 class parser;
 
-class string: public value
+class string
+	: public value
 {
 	std::string m_value;
 
@@ -164,7 +166,8 @@ class string: public value
 		void set(std::string new_value)	{ m_value = new_value; };
 };
 
-class number: public value
+class number
+	: public value
 {
 	std::string m_value;
 
@@ -178,7 +181,8 @@ class number: public value
 		void set(int const new_value)	{ m_value = (boost::format("%d") % new_value).str(); };
 };
 
-class boolean: public value
+class boolean
+	: public value
 {
 	bool m_value;
 
@@ -191,7 +195,8 @@ class boolean: public value
 		void set(bool new_value)	{ m_value = new_value; };
 };
 
-class null: public value
+class null
+	: public value
 {
 	public:
 		virtual void accept(visitor const & v) const;

@@ -25,10 +25,10 @@ class mysql_to_string:
 	}
 
 	public:
-		void convert(std::string & out, query::var & var)
+		void convert(std::string & out, query::value & value)
 		{
 			m_yielded = "";
-			var.accept(*this);
+			value.accept(*this);
 			out = m_yielded;
 		}
 
@@ -151,7 +151,7 @@ bool model::update(std::string table_name
 				auto const & original = tuple.get<0>();
 				auto const & updated = tuple.get<1>();
 
-				std::map<query::schema::field, std::shared_ptr<query::var>> set;
+				std::map<query::schema::field, std::shared_ptr<query::value>> set;
 
 				for(size_t idx = 0; idx < fields.size(); ++idx)
 				{

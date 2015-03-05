@@ -32,7 +32,7 @@ class const_visitor
 		virtual ~const_visitor();
 };
 
-class var
+class value
 {
 	struct impl;
 	std::unique_ptr<impl> mp_impl;
@@ -43,12 +43,12 @@ class var
 
 	public:
 
-		var();
+		value();
 
-		var(var const & copied);
-		explicit var(std::nullptr_t);
-		var & operator=(var const & copied);
-		var & operator=(std::nullptr_t);
+		value(value const & copied);
+		explicit value(std::nullptr_t);
+		value & operator=(value const & copied);
+		value & operator=(std::nullptr_t);
 
 		std::nullptr_t const get() const;
 
@@ -58,12 +58,12 @@ class var
 
 		virtual void accept(const_visitor & v) const = 0;
 		virtual void accept(visitor & v) = 0;
-		virtual void clone(std::shared_ptr<var> & p_v) const = 0;
-		virtual ~var();
+		virtual void clone(std::shared_ptr<value> & p_v) const = 0;
+		virtual ~value();
 };
 
 class string
-	: public var
+	: public value
 {
 	std::string m_value;
 
@@ -77,9 +77,9 @@ class string
 		std::string const & get() const;
 		void set(std::string const & new_value);
 
-		using var::operator ==;
-		using var::operator <;
-		using var::operator >;
+		using value::operator ==;
+		using value::operator <;
+		using value::operator >;
 		bool operator ==(string const & rhs) const;
 		bool operator < (string const & rhs) const;
 		bool operator > (string const & rhs) const;
@@ -89,12 +89,12 @@ class string
 
 		virtual void accept(visitor & v);
 		virtual void accept(const_visitor & v) const;
-		virtual void clone(std::shared_ptr<var> & p_v) const;
+		virtual void clone(std::shared_ptr<value> & p_v) const;
 		virtual ~string();
 };
 
 class integer
-	: public var
+	: public value
 {
 	long long m_value;
 
@@ -103,13 +103,13 @@ class integer
 		integer(integer const & copied);
 		explicit integer(std::string const & copied);
 		explicit integer(long long const copied);
-		using var::operator =;
+		using value::operator =;
 		integer & operator=(integer const & copied);
 
 		long long const & get() const;
 		void set(long long const new_value);
 
-		using var::operator ==;
+		using value::operator ==;
 		bool operator ==(integer const & rhs) const;
 		bool operator < (integer const & rhs) const;
 		bool operator > (integer const & rhs) const;
@@ -119,12 +119,12 @@ class integer
 
 		virtual void accept(visitor & v);
 		virtual void accept(const_visitor & v) const;
-		virtual void clone(std::shared_ptr<var> & p_v) const;
+		virtual void clone(std::shared_ptr<value> & p_v) const;
 		virtual ~integer();
 };
 
 class boolean
-	: public var
+	: public value
 {
 	bool m_value;
 
@@ -132,11 +132,11 @@ class boolean
 		boolean();
 		boolean(boolean const & copied);
 		explicit boolean(bool const copied);
-		using var::operator =;
+		using value::operator =;
 		boolean & operator=(boolean const & copied);
 		boolean & operator=(bool const copied);
 
-		using var::operator ==;
+		using value::operator ==;
 		bool operator ==(boolean const & rhs) const;
 		bool operator < (boolean const & rhs) const;
 		bool operator > (boolean const & rhs) const;
@@ -148,67 +148,67 @@ class boolean
 
 		virtual void accept(visitor & v);
 		virtual void accept(const_visitor & v) const;
-		virtual void clone(std::shared_ptr<var> & p_v) const;
+		virtual void clone(std::shared_ptr<value> & p_v) const;
 		virtual ~boolean();
 };
 
 template <typename value_type>
-void build(std::shared_ptr<var> & p_node)
+void build(std::shared_ptr<value> & p_node)
 {
 	p_node = std::move(std::make_shared<value_type>());
 }
 
 namespace comparison {
 
-bool operator ==(boolean const & lhs, webpp::query::var const & rhs);
-bool operator ==(string const & lhs, webpp::query::var const & rhs);
-bool operator ==(bool const & lhs, webpp::query::var const & rhs);
-bool operator ==(std::string const & lhs, webpp::query::var const & rhs);
+bool operator ==(boolean const & lhs, webpp::query::value const & rhs);
+bool operator ==(string const & lhs, webpp::query::value const & rhs);
+bool operator ==(bool const & lhs, webpp::query::value const & rhs);
+bool operator ==(std::string const & lhs, webpp::query::value const & rhs);
 
-inline bool operator !=(webpp::query::var const & lhs, std::nullptr_t)
+inline bool operator !=(webpp::query::value const & lhs, std::nullptr_t)
 {
 	return !(lhs == nullptr);
 }
 
-inline bool operator !=(std::nullptr_t, webpp::query::var const & rhs)
+inline bool operator !=(std::nullptr_t, webpp::query::value const & rhs)
 {
 	return rhs != nullptr;
 }
 
-inline bool operator !=(string const & lhs, webpp::query::var const & rhs)
+inline bool operator !=(string const & lhs, webpp::query::value const & rhs)
 {
 	return !(lhs == rhs);
 }
 
-inline bool operator !=(boolean const & lhs, webpp::query::var const & rhs)
+inline bool operator !=(boolean const & lhs, webpp::query::value const & rhs)
 {
 	return !(lhs == rhs);
 }
 
-inline bool operator !=(std::string const & lhs, webpp::query::var const & rhs)
+inline bool operator !=(std::string const & lhs, webpp::query::value const & rhs)
 {
 	return !(lhs == rhs);
 }
 
-inline bool operator !=(bool const & lhs, webpp::query::var const & rhs)
+inline bool operator !=(bool const & lhs, webpp::query::value const & rhs)
 {
 	return !(lhs == rhs);
 }
 
-inline bool operator ==(std::nullptr_t, webpp::query::var const & rhs)
+inline bool operator ==(std::nullptr_t, webpp::query::value const & rhs)
 {
 	return rhs == nullptr;
 }
 
-bool operator >(boolean const & lhs, webpp::query::var const & rhs);
-bool operator >(string const & lhs, webpp::query::var const & rhs);
-bool operator >(bool const & lhs, webpp::query::var const & rhs);
-bool operator >(std::string const & lhs, webpp::query::var const & rhs);
+bool operator >(boolean const & lhs, webpp::query::value const & rhs);
+bool operator >(string const & lhs, webpp::query::value const & rhs);
+bool operator >(bool const & lhs, webpp::query::value const & rhs);
+bool operator >(std::string const & lhs, webpp::query::value const & rhs);
 
-bool operator <(boolean const & lhs, webpp::query::var const & rhs);
-bool operator <(string const & lhs, webpp::query::var const & rhs);
-bool operator <(bool const & lhs, webpp::query::var const & rhs);
-bool operator <(std::string const & lhs, webpp::query::var const & rhs);
+bool operator <(boolean const & lhs, webpp::query::value const & rhs);
+bool operator <(string const & lhs, webpp::query::value const & rhs);
+bool operator <(bool const & lhs, webpp::query::value const & rhs);
+bool operator <(std::string const & lhs, webpp::query::value const & rhs);
 
 } // namespace comparison
 

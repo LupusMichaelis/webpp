@@ -31,8 +31,8 @@ struct compare_traits
 		former_type former;
 		latter_type latter;
 
-		var * p_former = &former;
-		var * p_latter = &latter;
+		value * p_former = &former;
+		value * p_latter = &latter;
 
 		(void) p_former, p_latter; // silent compiler warnings
 	}
@@ -46,7 +46,7 @@ struct compare_traits
 template <typename former_type, typename latter_type>
 bool const compare_traits<former_type, latter_type>::equals(former_type const & former, latter_type const & latter)
 {
-	return compare_traits<var, var>::equals(former, latter)
+	return compare_traits<value, value>::equals(former, latter)
 		or (nullptr != former and nullptr != latter
 				and former.operator ==(latter));
 }
@@ -54,32 +54,32 @@ bool const compare_traits<former_type, latter_type>::equals(former_type const & 
 template <typename former_type, typename latter_type>
 bool const compare_traits<former_type, latter_type>::greater_than(former_type const & former, latter_type const & latter)
 {
-	return compare_traits<var, var>::greater_than(former, latter)
+	return compare_traits<value, value>::greater_than(former, latter)
 		or (former.operator >(latter));
 }
 
 template <typename former_type, typename latter_type>
 bool const compare_traits<former_type, latter_type>::less_than(former_type const & former, latter_type const & latter)
 {
-	return compare_traits<var, var>::less_than(former, latter)
+	return compare_traits<value, value>::less_than(former, latter)
 		or (former.operator <(latter));
 }
 
 // Specialisation for base class, that only nows it's null or not
 template <>
-bool const compare_traits<var, var>::equals(var const & former, var const & latter)
+bool const compare_traits<value, value>::equals(value const & former, value const & latter)
 {
 	return nullptr == former and nullptr == latter;
 }
 
 template <>
-bool const compare_traits<var, var>::greater_than(var const & former, var const & latter)
+bool const compare_traits<value, value>::greater_than(value const & former, value const & latter)
 {
 	return nullptr != former and nullptr == latter;
 }
 
 template <>
-bool const compare_traits<var, var>::less_than(var const & former, var const & latter)
+bool const compare_traits<value, value>::less_than(value const & former, value const & latter)
 {
 	return nullptr != former and nullptr == latter;
 }
@@ -88,45 +88,45 @@ bool const compare_traits<var, var>::less_than(var const & former, var const & l
 template <>
 bool const compare_traits<string, boolean>::equals(string const & former, boolean const & latter)
 {
-	return compare_traits<var, var>::equals(former, latter);
+	return compare_traits<value, value>::equals(former, latter);
 }
 
 template <>
 bool const compare_traits<string, boolean>::greater_than(string const & former, boolean const & latter)
 {
-	return compare_traits<var, var>::greater_than(former, latter) or false;
+	return compare_traits<value, value>::greater_than(former, latter) or false;
 }
 
 template <>
 bool const compare_traits<string, boolean>::less_than(string const & former, boolean const & latter)
 {
-	return compare_traits<var, var>::greater_than(former, latter) or true;
+	return compare_traits<value, value>::greater_than(former, latter) or true;
 }
 
 // Specialization comparison boolean, string
 template <>
 bool const compare_traits<boolean, string>::equals(boolean const & former, string const & latter)
 {
-	return compare_traits<var, var>::equals(former, latter);
+	return compare_traits<value, value>::equals(former, latter);
 }
 
 template <>
 bool const compare_traits<boolean, string>::greater_than(boolean const & former, string const & latter)
 {
-	return compare_traits<var, var>::greater_than(former, latter) or true;
+	return compare_traits<value, value>::greater_than(former, latter) or true;
 }
 
 template <>
 bool const compare_traits<boolean, string>::less_than(boolean const & former, string const & latter)
 {
-	return compare_traits<var, var>::greater_than(former, latter) or false;
+	return compare_traits<value, value>::greater_than(former, latter) or false;
 }
 
 // Specialization comparison string, integer
 template <>
 bool const compare_traits<string, integer>::equals(string const & former, integer const & latter)
 {
-	return compare_traits<var, var>::equals(former, latter)
+	return compare_traits<value, value>::equals(former, latter)
 		or (nullptr != former and nullptr != latter
 				and former.operator ==(boost::lexical_cast<std::string>(latter.get())));
 }
@@ -134,14 +134,14 @@ bool const compare_traits<string, integer>::equals(string const & former, intege
 template <>
 bool const compare_traits<string, integer>::greater_than(string const & former, integer const & latter)
 {
-	return compare_traits<var, var>::greater_than(former, latter)
+	return compare_traits<value, value>::greater_than(former, latter)
 		or (former.operator >(boost::lexical_cast<std::string>(latter.get())));
 }
 
 template <>
 bool const compare_traits<string, integer>::less_than(string const & former, integer const & latter)
 {
-	return compare_traits<var, var>::greater_than(former, latter)
+	return compare_traits<value, value>::greater_than(former, latter)
 		or (former.operator <(boost::lexical_cast<std::string>(latter.get())));
 }
 
@@ -150,7 +150,7 @@ bool const compare_traits<string, integer>::less_than(string const & former, int
 template <>
 bool const compare_traits<boolean, integer>::equals(boolean const & former, integer const & latter)
 {
-	return compare_traits<var, var>::equals(former, latter)
+	return compare_traits<value, value>::equals(former, latter)
 		or (nullptr != former and nullptr != latter
 				and former.operator ==(bool(latter.get())));
 }
@@ -158,14 +158,14 @@ bool const compare_traits<boolean, integer>::equals(boolean const & former, inte
 template <>
 bool const compare_traits<boolean, integer>::greater_than(boolean const & former, integer const & latter)
 {
-	return compare_traits<var, var>::greater_than(former, latter)
+	return compare_traits<value, value>::greater_than(former, latter)
 		or (former.operator >(bool(latter.get())));
 }
 
 template <>
 bool const compare_traits<boolean, integer>::less_than(boolean const & former, integer const & latter)
 {
-	return compare_traits<var, var>::greater_than(former, latter)
+	return compare_traits<value, value>::greater_than(former, latter)
 		or (former.operator <(bool(latter.get())));
 }
 
@@ -182,7 +182,7 @@ struct comparator
 		, m_truth(false)
 	{ }
 
-	explicit comparator(var const & lhs)
+	explicit comparator(value const & lhs)
 		: m_former(dynamic_cast<previous_clause_type const &>(lhs))
 		, m_truth(false)
 	{ }
@@ -204,7 +204,7 @@ struct equality
 		: comparator<previous_clause_type> {lhs}
 	{ }
 
-	explicit equality(var const & lhs)
+	explicit equality(value const & lhs)
 		: comparator<previous_clause_type> {lhs}
 	{ }
 
@@ -215,7 +215,7 @@ struct equality
 		this->m_truth = comparator_traits::equals(this->m_former, latter);
 	}
 
-	void equals(var const & value)		{ value.accept(*this); }
+	void equals(value const & value)		{ value.accept(*this); }
 
 	virtual ~equality() { };
 
@@ -232,7 +232,7 @@ struct greater_than
 		: comparator<previous_clause_type> {lhs}
 	{ }
 
-	explicit greater_than(var const & lhs)
+	explicit greater_than(value const & lhs)
 		: comparator<previous_clause_type> {lhs}
 	{ }
 
@@ -243,7 +243,7 @@ struct greater_than
 		this->m_truth = comparator_traits::greater_than(this->m_former, latter);
 	}
 
-	void is_greater_than(var const & value)		{ value.accept(*this); }
+	void is_greater_than(value const & value)		{ value.accept(*this); }
 
 	virtual ~greater_than() { };
 
@@ -260,7 +260,7 @@ struct less_than
 		: comparator<previous_clause_type> {lhs}
 	{ }
 
-	explicit less_than(var const & lhs)
+	explicit less_than(value const & lhs)
 		: comparator<previous_clause_type> {lhs}
 	{ }
 
@@ -271,7 +271,7 @@ struct less_than
 		this->m_truth = comparator_traits::less_than(this->m_former, latter);
 	}
 
-	void is_less_than(var const & value)		{ value.accept(*this); }
+	void is_less_than(value const & value)		{ value.accept(*this); }
 
 	virtual ~less_than() { };
 
@@ -286,27 +286,27 @@ namespace comparison {
 // equality ////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-bool operator ==(string const & lhs, webpp::query::var const & rhs)
+bool operator ==(string const & lhs, webpp::query::value const & rhs)
 {
 	auto c = equality<string>(lhs);
 	c.equals(rhs);
 	return c;
 }
 
-bool operator ==(boolean const & lhs, webpp::query::var const & rhs)
+bool operator ==(boolean const & lhs, webpp::query::value const & rhs)
 {
 	auto c = equality<boolean>(lhs);
 	c.equals(rhs);
 	return c;
 }
 
-bool operator ==(std::string const & lhs, webpp::query::var const & rhs)
+bool operator ==(std::string const & lhs, webpp::query::value const & rhs)
 {
 	auto const converted = webpp::query::string {lhs};
 	return operator ==(converted, rhs);
 }
 
-bool operator ==(bool const & lhs, webpp::query::var const & rhs)
+bool operator ==(bool const & lhs, webpp::query::value const & rhs)
 {
 	auto const converted = webpp::query::boolean {lhs};
 	return operator ==(converted, rhs);
@@ -316,27 +316,27 @@ bool operator ==(bool const & lhs, webpp::query::var const & rhs)
 // greater than ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-bool operator >(string const & lhs, webpp::query::var const & rhs)
+bool operator >(string const & lhs, webpp::query::value const & rhs)
 {
 	auto c = greater_than<string>(lhs);
 	c.is_greater_than(rhs);
 	return c;
 }
 
-bool operator >(boolean const & lhs, webpp::query::var const & rhs)
+bool operator >(boolean const & lhs, webpp::query::value const & rhs)
 {
 	auto c = greater_than<boolean>(lhs);
 	c.is_greater_than(rhs);
 	return c;
 }
 
-bool operator >(std::string const & lhs, webpp::query::var const & rhs)
+bool operator >(std::string const & lhs, webpp::query::value const & rhs)
 {
 	auto const converted = webpp::query::string {lhs};
 	return operator >(converted, rhs);
 }
 
-bool operator >(bool const & lhs, webpp::query::var const & rhs)
+bool operator >(bool const & lhs, webpp::query::value const & rhs)
 {
 	auto const converted = webpp::query::boolean {lhs};
 	return operator >(converted, rhs);
@@ -346,27 +346,27 @@ bool operator >(bool const & lhs, webpp::query::var const & rhs)
 // less than ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-bool operator <(string const & lhs, webpp::query::var const & rhs)
+bool operator <(string const & lhs, webpp::query::value const & rhs)
 {
 	auto c = less_than<string>(lhs);
 	c.is_less_than(rhs);
 	return c;
 }
 
-bool operator <(boolean const & lhs, webpp::query::var const & rhs)
+bool operator <(boolean const & lhs, webpp::query::value const & rhs)
 {
 	auto c = less_than<boolean>(lhs);
 	c.is_less_than(rhs);
 	return c;
 }
 
-bool operator <(std::string const & lhs, webpp::query::var const & rhs)
+bool operator <(std::string const & lhs, webpp::query::value const & rhs)
 {
 	auto const converted = webpp::query::string {lhs};
 	return operator <(converted, rhs);
 }
 
-bool operator <(bool const & lhs, webpp::query::var const & rhs)
+bool operator <(bool const & lhs, webpp::query::value const & rhs)
 {
 	auto const converted = webpp::query::boolean {lhs};
 	return operator <(converted, rhs);
@@ -375,68 +375,68 @@ bool operator <(bool const & lhs, webpp::query::var const & rhs)
 } // namespace comparison
 
 ////////////////////////////////////////////////////////////////////////////////
-// class var ///////////////////////////////////////////////////////////////////
+// class value ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-struct var::impl
+struct value::impl
 {
 	impl() : is_null(true) {}
 
 	bool is_null;
 };
 
-var::var()
+value::value()
 	: mp_impl {std::make_unique<impl>()}
 {
 }
 
-var::var(var const & copied)
+value::value(value const & copied)
 	: mp_impl{std::make_unique<impl>(*copied.mp_impl)}
 {
 }
 
-var::var(std::nullptr_t)
-	: var()
+value::value(std::nullptr_t)
+	: value()
 {
 }
 
-var::~var()
+value::~value()
 {
 }
 
-void var::set_not_null()
+void value::set_not_null()
 {
 	mp_impl->is_null = false;
 }
 
-void var::set_null()
+void value::set_null()
 {
 	mp_impl->is_null = true;
 }
 
-var & var::operator =(var const & copied)
+value & value::operator =(value const & copied)
 {
 	auto p_impl = std::make_unique<impl>(*copied.mp_impl);
 	std::swap(p_impl, mp_impl);
 	return *this;
 }
 
-var & var::operator =(std::nullptr_t)
+value & value::operator =(std::nullptr_t)
 {
 	set_null();
 	return *this;
 }
 
-bool var::operator ==(std::nullptr_t) const
+bool value::operator ==(std::nullptr_t) const
 {
 	return mp_impl->is_null;
 }
 
-bool var::operator <(std::nullptr_t) const
+bool value::operator <(std::nullptr_t) const
 {
 	return false;
 }
 
-bool var::operator >(std::nullptr_t) const
+bool value::operator >(std::nullptr_t) const
 {
 	return nullptr != *this;
 }
@@ -445,17 +445,17 @@ bool var::operator >(std::nullptr_t) const
 // class string ////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 string::string()
-	: var {}, m_value {}
+	: value {}, m_value {}
 {
 }
 
 string::string(string const & copied)
-	: var {copied}, m_value {copied.m_value}
+	: value {copied}, m_value {copied.m_value}
 {
 }
 
 string::string(std::string const & copied)
-	: var {}, m_value {copied}
+	: value {}, m_value {copied}
 {
 	set_not_null();
 }
@@ -532,7 +532,7 @@ void string::accept(const_visitor & v) const
 	v.visit(*this);
 }
 
-void string::clone(std::shared_ptr<var> & p_v) const
+void string::clone(std::shared_ptr<value> & p_v) const
 {
 	p_v = std::make_unique<string>(*this);
 }
@@ -545,12 +545,12 @@ string::~string()
 // class integer ///////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 integer::integer()
-	: var {}, m_value()
+	: value {}, m_value()
 {
 }
 
 integer::integer(integer const & copied)
-	: var{copied}, m_value(copied.m_value)
+	: value{copied}, m_value(copied.m_value)
 {
 }
 
@@ -560,7 +560,7 @@ integer::integer(std::string const & copied)
 }
 
 integer::integer(long long const copied)
-	: var {}, m_value(copied)
+	: value {}, m_value(copied)
 {
 }
 
@@ -625,7 +625,7 @@ void integer::accept(const_visitor & v) const
 	v.visit(*this);
 }
 
-void integer::clone(std::shared_ptr<var> & p_v) const
+void integer::clone(std::shared_ptr<value> & p_v) const
 {
 	p_v = std::make_unique<integer>(*this);
 }
@@ -638,17 +638,17 @@ integer::~integer()
 // class boolean ///////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 boolean::boolean()
-	: var {}, m_value()
+	: value {}, m_value()
 {
 }
 
 boolean::boolean(boolean const & copied)
-	:  var {copied}, m_value(copied.m_value)
+	:  value {copied}, m_value(copied.m_value)
 {
 }
 
 boolean::boolean(bool const copied)
-	: var {}, m_value(copied)
+	: value {}, m_value(copied)
 {
 	set_not_null();
 }
@@ -712,7 +712,7 @@ void boolean::accept(const_visitor & v) const
 	v.visit(*this);
 }
 
-void boolean::clone(std::shared_ptr<var> & p_v) const
+void boolean::clone(std::shared_ptr<value> & p_v) const
 {
 	p_v = std::make_unique<boolean>(*this);
 }

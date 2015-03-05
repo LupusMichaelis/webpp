@@ -37,16 +37,16 @@ class builder
 
 		// Continuation clauses
 		builder from(schema::table table_name) const;
-		builder where(schema::field field, std::shared_ptr<var> p_field_value) const;
-		builder and_(schema::field field, std::shared_ptr<var> p_field_value) const;
-		builder values(std::vector<std::vector<std::shared_ptr<var>>> tuple_list) const;
-		builder set(std::map<schema::field, std::shared_ptr<var>> value_pair_list) const;
+		builder where(schema::field field, std::shared_ptr<value> p_field_value) const;
+		builder and_(schema::field field, std::shared_ptr<value> p_field_value) const;
+		builder values(std::vector<std::vector<std::shared_ptr<value>>> tuple_list) const;
+		builder set(std::map<schema::field, std::shared_ptr<value>> value_pair_list) const;
 
 		builder & from(schema::table table_name);
-		builder & where(schema::field field, std::shared_ptr<var> p_value);
-		builder & and_(schema::field field, std::shared_ptr<var> p_value);
-		builder & values(std::vector<std::vector<std::shared_ptr<var>>> tuple_list);
-		builder & set(std::map<schema::field, std::shared_ptr<var>> value_pair_list);
+		builder & where(schema::field field, std::shared_ptr<value> p_value);
+		builder & and_(schema::field field, std::shared_ptr<value> p_value);
+		builder & values(std::vector<std::vector<std::shared_ptr<value>>> tuple_list);
+		builder & set(std::map<schema::field, std::shared_ptr<value>> value_pair_list);
 
 		operator query() const;
 

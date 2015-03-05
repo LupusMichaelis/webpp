@@ -108,25 +108,25 @@ builder builder::from(schema::table table_name) const
 	return copy.from(table_name);
 }
 
-builder builder::where(schema::field field, std::shared_ptr<var> p_field_value) const
+builder builder::where(schema::field field, std::shared_ptr<value> p_field_value) const
 {
 	builder copy{*this};
 	return copy.where(field, p_field_value);
 }
 
-builder builder::and_(schema::field field, std::shared_ptr<var> p_field_value) const
+builder builder::and_(schema::field field, std::shared_ptr<value> p_field_value) const
 {
 	builder copy{*this};
 	return copy.and_(field, p_field_value);
 }
 
-builder builder::values(std::vector<std::vector<std::shared_ptr<var>>> tuple_list) const
+builder builder::values(std::vector<std::vector<std::shared_ptr<value>>> tuple_list) const
 {
 	builder copy{*this};
 	return copy.values(tuple_list);
 }
 
-builder builder::set(std::map<schema::field, std::shared_ptr<var>> field_value_pair_list) const
+builder builder::set(std::map<schema::field, std::shared_ptr<value>> field_value_pair_list) const
 {
 	builder copy{*this};
 	return copy.set(field_value_pair_list);
@@ -140,7 +140,7 @@ builder & builder::from(schema::table table)
 	return *this;
 }
 
-builder & builder::where(schema::field field, std::shared_ptr<var> p_value)
+builder & builder::where(schema::field field, std::shared_ptr<value> p_value)
 {
 	auto p_clause = std::make_shared<clause::where>(field, p_value);
 	push_clause(p_clause);
@@ -148,7 +148,7 @@ builder & builder::where(schema::field field, std::shared_ptr<var> p_value)
 	return *this;
 }
 
-builder & builder::and_(schema::field field, std::shared_ptr<var> p_value)
+builder & builder::and_(schema::field field, std::shared_ptr<value> p_value)
 {
 	auto p_clause = std::make_shared<clause::and_>(field, p_value);
 	push_clause(p_clause);
@@ -156,7 +156,7 @@ builder & builder::and_(schema::field field, std::shared_ptr<var> p_value)
 	return *this;
 }
 
-builder & builder::values(std::vector<std::vector<std::shared_ptr<var>>> tuple_list)
+builder & builder::values(std::vector<std::vector<std::shared_ptr<value>>> tuple_list)
 {
 	auto p_clause = std::make_shared<clause::values>(tuple_list);
 	push_clause(p_clause);
@@ -164,7 +164,7 @@ builder & builder::values(std::vector<std::vector<std::shared_ptr<var>>> tuple_l
 	return *this;
 }
 
-builder & builder::set(std::map<schema::field, std::shared_ptr<var>> field_value_pair_list)
+builder & builder::set(std::map<schema::field, std::shared_ptr<value>> field_value_pair_list)
 {
 	auto p_clause = std::make_shared<clause::set>(field_value_pair_list);
 	push_clause(p_clause);
@@ -411,7 +411,7 @@ simple_builder & simple_builder::from(std::string table_name)
 simple_builder & simple_builder::where(std::string field_name, std::string field_value)
 {
 	schema::field field{field_name};
-	std::shared_ptr<var> p_value = std::make_shared<string>(field_value);
+	std::shared_ptr<value> p_value = std::make_shared<string>(field_value);
 
 	return static_cast<simple_builder &>(builder::where(field, p_value));
 }
@@ -419,7 +419,7 @@ simple_builder & simple_builder::where(std::string field_name, std::string field
 simple_builder & simple_builder::and_(std::string field_name, std::string field_value)
 {
 	schema::field field{field_name};
-	std::shared_ptr<var> p_value = std::make_shared<string>(field_value);
+	std::shared_ptr<value> p_value = std::make_shared<string>(field_value);
 
 
 	return static_cast<simple_builder &>(builder::and_(field, p_value));
@@ -427,17 +427,17 @@ simple_builder & simple_builder::and_(std::string field_name, std::string field_
 
 simple_builder & simple_builder::values(std::vector<std::vector<std::string>> tuple_list)
 {
-	std::vector<std::vector<std::shared_ptr<var>>> tuples;
+	std::vector<std::vector<std::shared_ptr<value>>> tuples;
 	std::transform(tuple_list.cbegin(), tuple_list.cend(), std::back_inserter(tuples)
 		, [] (std::vector<std::string> const & values)
-			-> std::vector<std::shared_ptr<var>>
+			-> std::vector<std::shared_ptr<value>>
 			{
-				std::vector<std::shared_ptr<var>> tuple;
+				std::vector<std::shared_ptr<value>> tuple;
 				std::transform(values.cbegin(), values.cend(), std::back_inserter(tuple)
-					, [] (std::string const & value)
-						-> std::shared_ptr<var>
+					, [] (std::string const & v)
+						-> std::shared_ptr<value>
 						{
-							return std::make_shared<string>(value);
+							return std::make_shared<string>(v);
 						}
 					);
 
@@ -450,11 +450,11 @@ simple_builder & simple_builder::values(std::vector<std::vector<std::string>> tu
 
 simple_builder & simple_builder::set(std::map<std::string, std::string> field_value_pair_list)
 {
-	std::map<schema::field, std::shared_ptr<var>> field_value_pairs;
+	std::map<schema::field, std::shared_ptr<value>> field_value_pairs;
 	std::transform(field_value_pair_list.cbegin(), field_value_pair_list.cend()
 			, std::inserter(field_value_pairs, field_value_pairs.begin())
 			, [] (std::pair<std::string, std::string> const & field_value_pair)
-				-> std::pair<schema::field, std::shared_ptr<var>>
+				-> std::pair<schema::field, std::shared_ptr<value>>
 				{
 					return {schema::field{field_value_pair.first}
 						, std::make_shared<string>(field_value_pair.second)};

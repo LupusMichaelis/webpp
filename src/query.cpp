@@ -114,10 +114,10 @@ void query::visit(clause::values & clause)
 		std::transform(value_row.cbegin()
 			, value_row.cend()
 			, std::back_inserter(value_list)
-			, [] (std::shared_ptr<var> const & p_var)
+			, [] (std::shared_ptr<value> const & p_value)
 				-> std::string const
 				{
-					auto const & value = dynamic_cast<string const &>(*p_var);
+					auto const & value = dynamic_cast<string const &>(*p_value);
 					return "\"" + value.get()  + "\"";
 				}
 			);

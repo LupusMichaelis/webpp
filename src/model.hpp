@@ -15,7 +15,7 @@ class story;
 namespace mysql {
 class connection;
 class result;
-class var;
+class value;
 }
 
 namespace query {
@@ -35,13 +35,13 @@ class model
 	query::simple_builder const & query_builder() const;
 
 	public:
-		typedef std::vector<std::shared_ptr<query::var>>
+		typedef std::vector<std::shared_ptr<query::value>>
 													row_type;
 		typedef std::vector<row_type>				row_list_type;
 		typedef std::vector<query::schema::field>
 													field_list_type;
 
-		typedef std::map<query::schema::field, std::shared_ptr<query::var>>
+		typedef std::map<query::schema::field, std::shared_ptr<query::value>>
 													criteria_list_type;
 		typedef typename criteria_list_type::value_type
 													criteria_type;

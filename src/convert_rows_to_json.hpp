@@ -8,7 +8,7 @@ namespace webpp
 
 namespace query
 {
-	class var;
+	class value;
 }
 
 namespace json {
@@ -26,7 +26,7 @@ class convert_mysql_to_json
 	public:
 		convert_mysql_to_json();
 
-		void convert(std::unique_ptr<json::value> & p_jv, query::var & v);
+		void convert(std::unique_ptr<json::value> & p_jv, query::value & v);
 		void yield_null();
 
 		virtual void visit(query::boolean & v);

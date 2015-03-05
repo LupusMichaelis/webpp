@@ -24,11 +24,11 @@ class result
 		typedef std::vector<std::shared_ptr<query::schema::field>>
 													field_list_type;
 
-		typedef std::vector<std::shared_ptr<query::var>>
+		typedef std::vector<std::shared_ptr<query::value>>
 													row_type;
 		typedef std::vector<row_type>				row_list_type;
 
-		typedef std::map<query::schema::field, std::shared_ptr<query::var>>
+		typedef std::map<query::schema::field, std::shared_ptr<query::value>>
 													criteria_type;
 		typedef std::vector<criteria_type>			criteria_list_type;
 

@@ -80,10 +80,10 @@ void json_extract
 	{
 		// TODO visitor to convert json to mysql
 		auto & value = dynamic_cast<webpp::json::string &>(*property.second).get();
-		auto p_mysql_var = std::make_shared<webpp::query::string>(value);
+		auto p_mysql_value = std::make_shared<webpp::query::string>(value);
 		webpp::query::schema::field field{property.first};
 
-		p_out->insert(std::make_pair(field, p_mysql_var));
+		p_out->insert(std::make_pair(field, p_mysql_value));
 	}
 
 	std::swap(p_out, p_submitted);
@@ -120,9 +120,9 @@ int main()
 			webpp::query::schema::field key {std::string {results[1].first, results[1].second}};
 
 			std::string value {results[2].first, results[2].second};
-			std::shared_ptr<webpp::query::var> p_var { std::make_shared<webpp::query::string>(value) };
+			std::shared_ptr<webpp::query::value> p_value { std::make_shared<webpp::query::string>(value) };
 
-			auto criteria = std::make_pair(key, p_var);
+			auto criteria = std::make_pair(key, p_value);
 			criterias.insert(criteria);
 		}
 	}

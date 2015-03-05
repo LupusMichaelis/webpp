@@ -16,7 +16,7 @@ class field;
 class table;
 }
 
-class var;
+class value;
 
 namespace clause {
 
@@ -132,12 +132,12 @@ class replace
 class values
 	: public base
 {
-	std::vector<std::vector<std::shared_ptr<var>>> m_value_list;
+	std::vector<std::vector<std::shared_ptr<value>>> m_value_list;
 
 	public:
-		explicit values(std::vector<std::vector<std::shared_ptr<var>>> value_list);
+		explicit values(std::vector<std::vector<std::shared_ptr<value>>> value_list);
 
-		std::vector<std::vector<std::shared_ptr<var>>> const & value_list() const;
+		std::vector<std::vector<std::shared_ptr<value>>> const & value_list() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
@@ -163,13 +163,13 @@ class where
 	: public base
 {
 	schema::field m_lhs;
-	std::shared_ptr<var> mp_rhs;
+	std::shared_ptr<value> mp_rhs;
 
 	public:
-		where(schema::field lhs, std::shared_ptr<var> p_rhs);
+		where(schema::field lhs, std::shared_ptr<value> p_rhs);
 
 		schema::field const & lhs() const;
-		var const & rhs() const;
+		value const & rhs() const;
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
@@ -180,7 +180,7 @@ class and_
 	: public where
 {
 	public:
-		and_(schema::field lhs, std::shared_ptr<var> p_rhs)
+		and_(schema::field lhs, std::shared_ptr<value> p_rhs)
 			: where {lhs, p_rhs} { }
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
@@ -206,13 +206,13 @@ class update
 class set
 	: public base
 {
-	std::map<schema::field, std::shared_ptr<var>> m_field_list;
+	std::map<schema::field, std::shared_ptr<value>> m_field_list;
 
 	public:
-		explicit set(std::map<schema::field, std::shared_ptr<var>> field_value_pair_list);
-		set(schema::field field, std::shared_ptr<var> value_name);
+		explicit set(std::map<schema::field, std::shared_ptr<value>> field_value_pair_list);
+		set(schema::field field, std::shared_ptr<value> value_name);
 
-		std::map<schema::field, std::shared_ptr<var>> const & field_value_pair_list();
+		std::map<schema::field, std::shared_ptr<value>> const & field_value_pair_list();
 
 		virtual void clone(std::unique_ptr<base> & p_cloned);
 		virtual void accept(visitor & v);
