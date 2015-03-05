@@ -5,6 +5,7 @@ CPPFILES= \
 	  router.cpp \
 	  url.cpp \
 	  json_parser.cpp \
+	  json_dump.cpp \
 	  json.cpp \
 	  query_clause.cpp \
 	  query_builder.cpp \

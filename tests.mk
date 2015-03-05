@@ -56,15 +56,15 @@ $(TESTDIR)/test_query_var: $(TESTDIR)/test_query_var.so
 	$(UNITTESTER) $^
 
 # JSON parser tests ####################################################
-$(TESTDIR)/test_json.so: src/json_parser.o src/json.o $(TESTDIR)/test_json.o
+$(TESTDIR)/test_json.so: src/json_dump.o src/json_parser.o src/json.o $(TESTDIR)/test_json.o
 $(TESTDIR)/test_json: $(TESTDIR)/test_json.so
 	$(UNITTESTER) $^
 
 # Model test ###########################################################
 $(TESTDIR)/test_model.so: src/model.o \
-		src/json.o src/json_parser.o \
+		$(TESTDIR)/test_json.so \
+		$(TESTDIR)/test_query.so \
 		src/mysql_connection.o src/mysql_result.o \
-		src/query.o src/query_var.o src/query_builder.o src/query_clause.o \
 		$(TESTDIR)/test_model.o
 $(TESTDIR)/test_model: $(TESTDIR)/test_model.so
 	$(UNITTESTER) $^

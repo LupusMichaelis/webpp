@@ -1,6 +1,8 @@
 #ifndef HPP_JSON_WEBPP
 #	define HPP_JSON_WEBPP
 
+#	include "json_fwd.hpp"
+
 #	include "memory.hpp"
 
 #	include <vector>
@@ -20,16 +22,34 @@
 
 namespace webpp { namespace json {
 
-class value;
-class string;
-class array;
-class object;
-class number;
-class null;
-class boolean;
+////////////////////////////////////////////////////////////////////////////////
+// JSON visitors ///////////////////////////////////////////////////////////////
+class visitor
+{
+	public:
+		virtual void visit(webpp::json::string & node) const = 0;
+		virtual void visit(webpp::json::array & node) const = 0;
+		virtual void visit(webpp::json::object & node) const = 0;
+		virtual void visit(webpp::json::number & node) const = 0;
+		virtual void visit(webpp::json::null & node) const = 0;
+		virtual void visit(webpp::json::boolean & node) const = 0;
+		virtual ~visitor();
+};
 
-void dump(std::ostream & out, webpp::json::value const & node);
+class const_visitor
+{
+	public:
+		virtual void visit(webpp::json::string const & node) const = 0;
+		virtual void visit(webpp::json::array const & node) const = 0;
+		virtual void visit(webpp::json::object const & node) const = 0;
+		virtual void visit(webpp::json::number const & node) const = 0;
+		virtual void visit(webpp::json::null const & node) const = 0;
+		virtual void visit(webpp::json::boolean const & node) const = 0;
+		virtual ~const_visitor();
+};
 
+////////////////////////////////////////////////////////////////////////////////
+// factories ///////////////////////////////////////////////////////////////////
 template <typename value_type>
 void build(std::unique_ptr<value_type> & p_node);
 
@@ -59,47 +79,31 @@ extern template void build<string, std::string>(std::unique_ptr<value> & p_node,
 extern template void build<boolean, bool>(std::unique_ptr<value> & p_node, bool const & value);
 extern template void build<number, std::string>(std::unique_ptr<value> & p_node, std::string const & value);
 
-class visitor
-{
-	public:
-		virtual void visit(webpp::json::string const & node) const = 0;
-		virtual void visit(webpp::json::array const & node) const = 0;
-		virtual void visit(webpp::json::object const & node) const = 0;
-		virtual void visit(webpp::json::number const & node) const = 0;
-		virtual void visit(webpp::json::null const & node) const = 0;
-		virtual void visit(webpp::json::boolean const & node) const = 0;
-		virtual ~visitor();
-};
-
-class print
-	: public visitor
-{
-	struct impl;
-	std::unique_ptr<impl> mp_impl;
-
-	public:
-
-		print() = delete;
-		explicit print(std::ostream & out);
-		virtual ~print();
-
-		virtual void visit(webpp::json::string const & node) const;
-		virtual void visit(webpp::json::array const & node) const;
-		virtual void visit(webpp::json::object const & node) const;
-		virtual void visit(webpp::json::number const & node) const;
-		virtual void visit(webpp::json::null const & node) const;
-		virtual void visit(webpp::json::boolean const & node) const;
-};
-
+////////////////////////////////////////////////////////////////////////////////
+// class value /////////////////////////////////////////////////////////////////
 class value
 {
 	public:
-		virtual void accept(visitor const & v) const = 0;
+		virtual void accept(const_visitor const & v) const = 0;
 		virtual void clone(std::unique_ptr<value> & p_v) const = 0;
 		virtual ~value();
 };
 
-class object: public value
+////////////////////////////////////////////////////////////////////////////////
+// class null //////////////////////////////////////////////////////////////////
+class null
+	: public value
+{
+	public:
+		virtual void accept(const_visitor const & v) const;
+		virtual void clone(std::unique_ptr<value> & p_v) const;
+		virtual ~null();
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// class object ////////////////////////////////////////////////////////////////
+class object
+	: public value
 {
 	std::map<std::string, std::shared_ptr<value>> m_properties;
 
@@ -107,7 +111,7 @@ class object: public value
 		object() = default;
 		object(object const &);
 
-		virtual void accept(visitor const & v) const;
+		virtual void accept(const_visitor const & v) const;
 		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~object();
 
@@ -122,7 +126,10 @@ void add_property(object & self, std::string const key, bool const value);
 void add_property(object & self, std::string const key, std::string const value);
 void add_property(object & self, std::string const key, std::nullptr_t const );
 
-class array: public value
+////////////////////////////////////////////////////////////////////////////////
+// class array /////////////////////////////////////////////////////////////////
+class array
+	: public value
 {
 	std::vector<std::shared_ptr<value>> m_values;
 
@@ -130,7 +137,7 @@ class array: public value
 		array() = default;
 		array(array const &);
 
-		virtual void accept(visitor const & v) const;
+		virtual void accept(const_visitor const & v) const;
 		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~array();
 
@@ -150,15 +157,15 @@ void add(array & self, size_t index, int const number_value);
 void add(array & self, size_t index, array const array_value);
 void add(array & self, std::string const key, array const array_value);
 
-class parser;
-
+////////////////////////////////////////////////////////////////////////////////
+// class string ////////////////////////////////////////////////////////////////
 class string
 	: public value
 {
 	std::string m_value;
 
 	public:
-		virtual void accept(visitor const & v) const;
+		virtual void accept(const_visitor const & v) const;
 		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~string();
 
@@ -166,13 +173,15 @@ class string
 		void set(std::string new_value)	{ m_value = new_value; };
 };
 
+////////////////////////////////////////////////////////////////////////////////
+// class number ////////////////////////////////////////////////////////////////
 class number
 	: public value
 {
 	std::string m_value;
 
 	public:
-		virtual void accept(visitor const & v) const;
+		virtual void accept(const_visitor const & v) const;
 		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~number();
 
@@ -181,27 +190,20 @@ class number
 		void set(int const new_value)	{ m_value = (boost::format("%d") % new_value).str(); };
 };
 
+////////////////////////////////////////////////////////////////////////////////
+// class boolean ///////////////////////////////////////////////////////////////
 class boolean
 	: public value
 {
 	bool m_value;
 
 	public:
-		virtual void accept(visitor const & v) const;
+		virtual void accept(const_visitor const & v) const;
 		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~boolean();
 
 		bool const get() const	{ return m_value;};
 		void set(bool new_value)	{ m_value = new_value; };
-};
-
-class null
-	: public value
-{
-	public:
-		virtual void accept(visitor const & v) const;
-		virtual void clone(std::unique_ptr<value> & p_v) const;
-		virtual ~null();
 };
 
 } } // namespace webpp::json

@@ -2,6 +2,7 @@
 #include "src/http_request.hpp"
 #include "src/json.hpp"
 #include "src/json_parser.hpp"
+#include "src/json_dump.hpp"
 #include "src/model.hpp"
 #include "src/mysql_connection.hpp"
 #include "src/query_schema.hpp"

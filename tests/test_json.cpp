@@ -1,6 +1,7 @@
 
 #include "../src/json.hpp"
 #include "../src/json_parser.hpp"
+#include "../src/json_dump.hpp"
 
 #include <boost/format.hpp>
 #include <iostream>
