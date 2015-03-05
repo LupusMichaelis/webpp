@@ -53,6 +53,8 @@ class var
 		std::nullptr_t const get() const;
 
 		bool operator ==(std::nullptr_t) const;
+		bool operator <(std::nullptr_t) const;
+		bool operator >(std::nullptr_t) const;
 
 		virtual void accept(const_visitor & v) const = 0;
 		virtual void accept(visitor & v) = 0;
@@ -76,8 +78,14 @@ class string
 		void set(std::string const & new_value);
 
 		using var::operator ==;
+		using var::operator <;
+		using var::operator >;
 		bool operator ==(string const & rhs) const;
+		bool operator < (string const & rhs) const;
+		bool operator > (string const & rhs) const;
 		bool operator ==(std::string const & rhs) const;
+		bool operator < (std::string const & rhs) const;
+		bool operator > (std::string const & rhs) const;
 
 		virtual void accept(visitor & v);
 		virtual void accept(const_visitor & v) const;
@@ -103,7 +111,11 @@ class integer
 
 		using var::operator ==;
 		bool operator ==(integer const & rhs) const;
+		bool operator < (integer const & rhs) const;
+		bool operator > (integer const & rhs) const;
 		bool operator ==(long long const rhs) const;
+		bool operator < (long long const rhs) const;
+		bool operator > (long long const rhs) const;
 
 		virtual void accept(visitor & v);
 		virtual void accept(const_visitor & v) const;
@@ -126,7 +138,11 @@ class boolean
 
 		using var::operator ==;
 		bool operator ==(boolean const & rhs) const;
+		bool operator < (boolean const & rhs) const;
+		bool operator > (boolean const & rhs) const;
 		bool operator ==(bool const rhs) const;
+		bool operator < (bool const rhs) const;
+		bool operator > (bool const rhs) const;
 
 		bool const get() const { return m_value; }
 
@@ -144,6 +160,11 @@ void build(std::shared_ptr<var> & p_node)
 
 namespace comparison {
 
+bool operator ==(boolean const & lhs, webpp::query::var const & rhs);
+bool operator ==(string const & lhs, webpp::query::var const & rhs);
+bool operator ==(bool const & lhs, webpp::query::var const & rhs);
+bool operator ==(std::string const & lhs, webpp::query::var const & rhs);
+
 inline bool operator !=(webpp::query::var const & lhs, std::nullptr_t)
 {
 	return !(lhs == nullptr);
@@ -154,16 +175,40 @@ inline bool operator !=(std::nullptr_t, webpp::query::var const & rhs)
 	return rhs != nullptr;
 }
 
+inline bool operator !=(string const & lhs, webpp::query::var const & rhs)
+{
+	return !(lhs == rhs);
+}
+
+inline bool operator !=(boolean const & lhs, webpp::query::var const & rhs)
+{
+	return !(lhs == rhs);
+}
+
+inline bool operator !=(std::string const & lhs, webpp::query::var const & rhs)
+{
+	return !(lhs == rhs);
+}
+
+inline bool operator !=(bool const & lhs, webpp::query::var const & rhs)
+{
+	return !(lhs == rhs);
+}
+
 inline bool operator ==(std::nullptr_t, webpp::query::var const & rhs)
 {
 	return rhs == nullptr;
 }
 
-bool operator ==(boolean const & lhs, webpp::query::var const & rhs);
-bool operator ==(string const & lhs, webpp::query::var const & rhs);
+bool operator >(boolean const & lhs, webpp::query::var const & rhs);
+bool operator >(string const & lhs, webpp::query::var const & rhs);
+bool operator >(bool const & lhs, webpp::query::var const & rhs);
+bool operator >(std::string const & lhs, webpp::query::var const & rhs);
 
-bool operator ==(bool const & lhs, webpp::query::var const & rhs);
-bool operator ==(std::string const & lhs, webpp::query::var const & rhs);
+bool operator <(boolean const & lhs, webpp::query::var const & rhs);
+bool operator <(string const & lhs, webpp::query::var const & rhs);
+bool operator <(bool const & lhs, webpp::query::var const & rhs);
+bool operator <(std::string const & lhs, webpp::query::var const & rhs);
 
 } // namespace comparison
 

@@ -6,6 +6,7 @@
 #include <cstring>
 #include <stdexcept>
 #include <iostream>
+#include <boost/lexical_cast.hpp>
 
 namespace webpp { namespace query {
 
@@ -36,142 +37,265 @@ struct compare_traits
 		(void) p_former, p_latter; // silent compiler warnings
 	}
 
-	static bool const equals(former_type const & former, latter_type const & latter)
-	{
-		return (nullptr == former and nullptr == latter)
-			or (nullptr != former and nullptr != latter
-					and former.operator ==(latter));
-	}
-
-	/*
-	static bool const greater_than(former_type const & former, latter_type const & latter)
-	{
-		return nullptr != former and nullptr == latter;
-	}
-
-	static bool const lower_than(former_type const & former, latter_type const & latter)
-	{
-		return nullptr == former and nullptr != latter;
-	}
-	*/
+	static bool const equals(former_type const & former, latter_type const & latter);
+	static bool const greater_than(former_type const & former, latter_type const & latter);
+	static bool const less_than(former_type const & former, latter_type const & latter);
 };
 
-template<>
-struct compare_traits<string, boolean>
+// Generic comparision (works for same type comparision)
+template <typename former_type, typename latter_type>
+bool const compare_traits<former_type, latter_type>::equals(former_type const & former, latter_type const & latter)
 {
-	static bool const equals(string const & former, boolean const & latter)
-	{
-		return nullptr == former and nullptr == latter;
-	}
-};
+	return compare_traits<var, var>::equals(former, latter)
+		or (nullptr != former and nullptr != latter
+				and former.operator ==(latter));
+}
 
-template<>
-struct compare_traits<string, integer>
+template <typename former_type, typename latter_type>
+bool const compare_traits<former_type, latter_type>::greater_than(former_type const & former, latter_type const & latter)
 {
-	static bool const equals(string const & former, integer const & latter)
-	{
-		return nullptr == former and nullptr == latter;
-	}
-};
+	return compare_traits<var, var>::greater_than(former, latter)
+		or (former.operator >(latter));
+}
 
-template<>
-struct compare_traits<integer, boolean>
+template <typename former_type, typename latter_type>
+bool const compare_traits<former_type, latter_type>::less_than(former_type const & former, latter_type const & latter)
 {
-	static bool const equals(integer const & former, boolean const & latter)
-	{
-		return nullptr == former and nullptr == latter;
-	}
-};
+	return compare_traits<var, var>::less_than(former, latter)
+		or (former.operator <(latter));
+}
 
-template<>
-struct compare_traits<integer, string>
+// Specialisation for base class, that only nows it's null or not
+template <>
+bool const compare_traits<var, var>::equals(var const & former, var const & latter)
 {
-	static bool const equals(integer const & former, string const & latter)
-	{
-		return nullptr == former and nullptr == latter;
-	}
-};
+	return nullptr == former and nullptr == latter;
+}
 
-template<>
-struct compare_traits<boolean, integer>
+template <>
+bool const compare_traits<var, var>::greater_than(var const & former, var const & latter)
 {
-	static bool const equals(boolean const & former, integer const & latter)
-	{
-		return nullptr == former and nullptr == latter;
-	}
-};
+	return nullptr != former and nullptr == latter;
+}
 
-template<>
-struct compare_traits<boolean, string>
+template <>
+bool const compare_traits<var, var>::less_than(var const & former, var const & latter)
 {
-	static bool const equals(boolean const & former, string const & latter)
-	{
-		return nullptr == former and nullptr == latter;
-	}
-};
+	return nullptr != former and nullptr == latter;
+}
 
-/*
-template<>
-struct compare_traits<boolean, boolean>
+// Specialization comparison string, boolean
+template <>
+bool const compare_traits<string, boolean>::equals(string const & former, boolean const & latter)
 {
-	static bool const equals(boolean const & former, boolean const & latter)
-	{
-		return former.get() == latter.get();
-	}
+	return compare_traits<var, var>::equals(former, latter);
+}
 
-	static bool const greater_than(boolean const & former, boolean const & latter)
-	{
-		return former.get() > latter.get();
-	}
+template <>
+bool const compare_traits<string, boolean>::greater_than(string const & former, boolean const & latter)
+{
+	return compare_traits<var, var>::greater_than(former, latter) or false;
+}
 
-	static bool const lower_than(boolean const & former, boolean const & latter)
-	{
-		return former.get() < latter.get();
-	}
-};
-*/
+template <>
+bool const compare_traits<string, boolean>::less_than(string const & former, boolean const & latter)
+{
+	return compare_traits<var, var>::greater_than(former, latter) or true;
+}
 
+// Specialization comparison boolean, string
+template <>
+bool const compare_traits<boolean, string>::equals(boolean const & former, string const & latter)
+{
+	return compare_traits<var, var>::equals(former, latter);
+}
+
+template <>
+bool const compare_traits<boolean, string>::greater_than(boolean const & former, string const & latter)
+{
+	return compare_traits<var, var>::greater_than(former, latter) or true;
+}
+
+template <>
+bool const compare_traits<boolean, string>::less_than(boolean const & former, string const & latter)
+{
+	return compare_traits<var, var>::greater_than(former, latter) or false;
+}
+
+// Specialization comparison string, integer
+template <>
+bool const compare_traits<string, integer>::equals(string const & former, integer const & latter)
+{
+	return compare_traits<var, var>::equals(former, latter)
+		or (nullptr != former and nullptr != latter
+				and former.operator ==(boost::lexical_cast<std::string>(latter.get())));
+}
+
+template <>
+bool const compare_traits<string, integer>::greater_than(string const & former, integer const & latter)
+{
+	return compare_traits<var, var>::greater_than(former, latter)
+		or (former.operator >(boost::lexical_cast<std::string>(latter.get())));
+}
+
+template <>
+bool const compare_traits<string, integer>::less_than(string const & former, integer const & latter)
+{
+	return compare_traits<var, var>::greater_than(former, latter)
+		or (former.operator <(boost::lexical_cast<std::string>(latter.get())));
+}
+
+// Specialization comparison boolean, integer
+// We cast the integer in a POD to compare to the lhs boolean
+template <>
+bool const compare_traits<boolean, integer>::equals(boolean const & former, integer const & latter)
+{
+	return compare_traits<var, var>::equals(former, latter)
+		or (nullptr != former and nullptr != latter
+				and former.operator ==(bool(latter.get())));
+}
+
+template <>
+bool const compare_traits<boolean, integer>::greater_than(boolean const & former, integer const & latter)
+{
+	return compare_traits<var, var>::greater_than(former, latter)
+		or (former.operator >(bool(latter.get())));
+}
+
+template <>
+bool const compare_traits<boolean, integer>::less_than(boolean const & former, integer const & latter)
+{
+	return compare_traits<var, var>::greater_than(former, latter)
+		or (former.operator <(bool(latter.get())));
+}
+
+//
 template<typename previous_clause_type>
 struct comparator
-	: public const_visitor
+	: const_visitor
 {
 	previous_clause_type const & m_former;
-	bool m_equals;
+	bool m_truth;
 
 	explicit comparator(previous_clause_type const & lhs)
 		: m_former(lhs)
-		, m_equals(false)
+		, m_truth(false)
 	{ }
 
-	~comparator() { };
+	explicit comparator(var const & lhs)
+		: m_former(dynamic_cast<previous_clause_type const &>(lhs))
+		, m_truth(false)
+	{ }
+
+	operator bool() { return m_truth; }
+
+	virtual ~comparator() { };
+
+	virtual void visit(boolean const & value) = 0;
+	virtual void visit(integer const & value) = 0;
+	virtual void visit(string const & value) = 0;
+};
+
+template<typename previous_clause_type>
+struct equality
+	: comparator<previous_clause_type>
+{
+	explicit equality(previous_clause_type const & lhs)
+		: comparator<previous_clause_type> {lhs}
+	{ }
+
+	explicit equality(var const & lhs)
+		: comparator<previous_clause_type> {lhs}
+	{ }
 
 	template<typename next_clause_type>
 	void equals(next_clause_type const & latter)
 	{
 		typedef compare_traits<previous_clause_type, next_clause_type> comparator_traits;
-		m_equals = comparator_traits::equals(m_former, latter);
+		this->m_truth = comparator_traits::equals(this->m_former, latter);
 	}
 
-	virtual void equals(var const & value)			{ value.accept(*this); }
-	virtual void visit(boolean const & value)		{ equals<>(value); }
-	virtual void visit(integer const & value)		{ equals<>(value); }
-	virtual void visit(string const & value)		{ equals<>(value); }
+	void equals(var const & value)		{ value.accept(*this); }
 
-	operator bool() { return m_equals; }
+	virtual ~equality() { };
+
+	virtual void visit(boolean const & value)	{ equals<>(value); }
+	virtual void visit(integer const & value)	{ equals<>(value); }
+	virtual void visit(string const & value)	{ equals<>(value); }
+};
+
+template<typename previous_clause_type>
+struct greater_than
+	: comparator<previous_clause_type>
+{
+	explicit greater_than(previous_clause_type const & lhs)
+		: comparator<previous_clause_type> {lhs}
+	{ }
+
+	explicit greater_than(var const & lhs)
+		: comparator<previous_clause_type> {lhs}
+	{ }
+
+	template<typename next_clause_type>
+	void gt(next_clause_type const & latter)
+	{
+		typedef compare_traits<previous_clause_type, next_clause_type> comparator_traits;
+		this->m_truth = comparator_traits::greater_than(this->m_former, latter);
+	}
+
+	void is_greater_than(var const & value)		{ value.accept(*this); }
+
+	virtual ~greater_than() { };
+
+	virtual void visit(boolean const & value)	{ gt<>(value); }
+	virtual void visit(integer const & value)	{ gt<>(value); }
+	virtual void visit(string const & value)	{ gt<>(value); }
+};
+
+template<typename previous_clause_type>
+struct less_than
+	: comparator<previous_clause_type>
+{
+	explicit less_than(previous_clause_type const & lhs)
+		: comparator<previous_clause_type> {lhs}
+	{ }
+
+	explicit less_than(var const & lhs)
+		: comparator<previous_clause_type> {lhs}
+	{ }
+
+	template<typename next_clause_type>
+	void lt(next_clause_type const & latter)
+	{
+		typedef compare_traits<previous_clause_type, next_clause_type> comparator_traits;
+		this->m_truth = comparator_traits::less_than(this->m_former, latter);
+	}
+
+	void is_less_than(var const & value)		{ value.accept(*this); }
+
+	virtual ~less_than() { };
+
+	virtual void visit(boolean const & value)	{ lt<>(value); }
+	virtual void visit(integer const & value)	{ lt<>(value); }
+	virtual void visit(string const & value)	{ lt<>(value); }
 };
 
 namespace comparison {
 
+////////////////////////////////////////////////////////////////////////////////
+// equality ////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
 bool operator ==(string const & lhs, webpp::query::var const & rhs)
 {
-	auto c = comparator<string>(lhs);
+	auto c = equality<string>(lhs);
 	c.equals(rhs);
 	return c;
 }
 
 bool operator ==(boolean const & lhs, webpp::query::var const & rhs)
 {
-	auto c = comparator<boolean>(lhs);
+	auto c = equality<boolean>(lhs);
 	c.equals(rhs);
 	return c;
 }
@@ -186,6 +310,66 @@ bool operator ==(bool const & lhs, webpp::query::var const & rhs)
 {
 	auto const converted = webpp::query::boolean {lhs};
 	return operator ==(converted, rhs);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// greater than ////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+bool operator >(string const & lhs, webpp::query::var const & rhs)
+{
+	auto c = greater_than<string>(lhs);
+	c.is_greater_than(rhs);
+	return c;
+}
+
+bool operator >(boolean const & lhs, webpp::query::var const & rhs)
+{
+	auto c = greater_than<boolean>(lhs);
+	c.is_greater_than(rhs);
+	return c;
+}
+
+bool operator >(std::string const & lhs, webpp::query::var const & rhs)
+{
+	auto const converted = webpp::query::string {lhs};
+	return operator >(converted, rhs);
+}
+
+bool operator >(bool const & lhs, webpp::query::var const & rhs)
+{
+	auto const converted = webpp::query::boolean {lhs};
+	return operator >(converted, rhs);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// less than ///////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+bool operator <(string const & lhs, webpp::query::var const & rhs)
+{
+	auto c = less_than<string>(lhs);
+	c.is_less_than(rhs);
+	return c;
+}
+
+bool operator <(boolean const & lhs, webpp::query::var const & rhs)
+{
+	auto c = less_than<boolean>(lhs);
+	c.is_less_than(rhs);
+	return c;
+}
+
+bool operator <(std::string const & lhs, webpp::query::var const & rhs)
+{
+	auto const converted = webpp::query::string {lhs};
+	return operator <(converted, rhs);
+}
+
+bool operator <(bool const & lhs, webpp::query::var const & rhs)
+{
+	auto const converted = webpp::query::boolean {lhs};
+	return operator <(converted, rhs);
 }
 
 } // namespace comparison
@@ -247,12 +431,15 @@ bool var::operator ==(std::nullptr_t) const
 	return mp_impl->is_null;
 }
 
-/*
-var::operator bool() const
+bool var::operator <(std::nullptr_t) const
 {
-	return !mp_impl->is_null;
+	return false;
 }
-*/
+
+bool var::operator >(std::nullptr_t) const
+{
+	return nullptr != *this;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // class string ////////////////////////////////////////////////////////////////
@@ -303,13 +490,36 @@ void string::set(std::string const & new_value)
 
 bool string::operator ==(string const & rhs) const
 {
-	return (nullptr == *this and nullptr == rhs)
+	return nullptr == rhs
 		or *this == rhs.m_value;
+}
+
+bool string::operator < (string const & rhs) const
+{
+	return nullptr == *this
+		or nullptr != rhs
+		or *this < rhs.m_value;
+}
+
+bool string::operator > (string const & rhs) const
+{
+	return nullptr != *this
+		and *this > rhs.m_value;
 }
 
 bool string::operator ==(std::string const & rhs) const
 {
 	return nullptr != *this and m_value == rhs;
+}
+
+bool string::operator < (std::string const & rhs) const
+{
+	return nullptr == *this or m_value < rhs;
+}
+
+bool string::operator > (std::string const & rhs) const
+{
+	return nullptr != *this and m_value > rhs;
 }
 
 void string::accept(visitor & v)
@@ -360,7 +570,6 @@ integer & integer::operator=(integer const & copied)
 	return *this;
 }
 
-
 long long const & integer::get() const
 {
 	return m_value;
@@ -377,10 +586,33 @@ bool integer::operator ==(long long const rhs) const
 	return nullptr != *this or (m_value and rhs);
 }
 
+bool integer::operator < (integer const & rhs) const
+{
+	return nullptr == *this and nullptr != rhs
+		and *this < rhs.m_value;
+}
+
+bool integer::operator > (integer const & rhs) const
+{
+	return nullptr != *this
+		and *this > rhs.m_value;
+}
+
 bool integer::operator ==(integer const & rhs) const
 {
 	return (nullptr == *this and nullptr == rhs)
 		or *this == rhs.m_value;
+}
+bool integer::operator < (long long const rhs) const
+{
+	return nullptr == *this
+		or m_value < rhs;
+}
+
+bool integer::operator > (long long const rhs) const
+{
+	return nullptr != *this
+		or m_value > rhs;
 }
 
 void integer::accept(visitor & v)
@@ -440,10 +672,34 @@ bool boolean::operator ==(bool const rhs) const
 	return nullptr != *this and m_value == rhs;
 }
 
+bool boolean::operator < (boolean const & rhs) const
+{
+	return nullptr == *this
+		or *this > rhs.m_value;
+}
+
+bool boolean::operator > (boolean const & rhs) const
+{
+	return nullptr != *this
+		or *this > rhs.m_value;
+}
+
 bool boolean::operator ==(boolean const & rhs) const
 {
 	return (nullptr != *this and nullptr != rhs)
 		or *this == rhs.m_value;
+}
+
+bool boolean::operator < (bool const rhs) const
+{
+	return nullptr == *this
+		or m_value < rhs;
+}
+
+bool boolean::operator > (bool const rhs) const
+{
+	return nullptr != *this
+		or m_value > rhs;
 }
 
 void boolean::accept(visitor & v)

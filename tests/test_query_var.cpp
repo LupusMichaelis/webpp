@@ -161,4 +161,9 @@ Ensure(mysql_var, compare_different_types)
 	assert_that(std::string("random") == my_subject, is_true);
 	assert_that(my_subject == my_truth, is_false);
 	assert_that(my_truth == my_subject, is_false);
+	assert_that(my_truth != my_subject, is_true);
+	assert_that(my_truth > my_subject, is_true);
+	assert_that(my_truth < my_subject, is_false);
+	assert_that(my_subject > my_truth, is_false);
+	assert_that(my_subject < my_truth, is_true);
 }
