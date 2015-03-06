@@ -159,8 +159,7 @@ bool model::update(std::string table_name
 					auto const & original_value = original.at(idx);
 					auto const & updated_value = updated.at(idx);
 
-					//if(nullptr != updated_value && *original_value != *updated_value)
-					if(nullptr != updated_value)
+					if(nullptr != updated_value and *original_value != *updated_value)
 						set.insert({field, updated_value});
 				}
 
