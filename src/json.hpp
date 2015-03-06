@@ -27,24 +27,24 @@ namespace webpp { namespace json {
 class visitor
 {
 	public:
-		virtual void visit(webpp::json::string & node) const = 0;
-		virtual void visit(webpp::json::array & node) const = 0;
-		virtual void visit(webpp::json::object & node) const = 0;
-		virtual void visit(webpp::json::number & node) const = 0;
-		virtual void visit(webpp::json::null & node) const = 0;
-		virtual void visit(webpp::json::boolean & node) const = 0;
+		virtual void visit(string & node) const = 0;
+		virtual void visit(array & node) const = 0;
+		virtual void visit(object & node) const = 0;
+		virtual void visit(number & node) const = 0;
+		virtual void visit(null & node) const = 0;
+		virtual void visit(boolean & node) const = 0;
 		virtual ~visitor();
 };
 
 class const_visitor
 {
 	public:
-		virtual void visit(webpp::json::string const & node) const = 0;
-		virtual void visit(webpp::json::array const & node) const = 0;
-		virtual void visit(webpp::json::object const & node) const = 0;
-		virtual void visit(webpp::json::number const & node) const = 0;
-		virtual void visit(webpp::json::null const & node) const = 0;
-		virtual void visit(webpp::json::boolean const & node) const = 0;
+		virtual void visit(string const & node) const = 0;
+		virtual void visit(array const & node) const = 0;
+		virtual void visit(object const & node) const = 0;
+		virtual void visit(number const & node) const = 0;
+		virtual void visit(null const & node) const = 0;
+		virtual void visit(boolean const & node) const = 0;
 		virtual ~const_visitor();
 };
 
@@ -185,9 +185,9 @@ class number
 		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~number();
 
-		std::string const & get() const { return m_value; };
+		std::string const & get() const			{ return m_value; };
 		void set(std::string const new_value)	{ m_value = new_value; };
-		void set(int const new_value)	{ m_value = (boost::format("%d") % new_value).str(); };
+		void set(int const new_value)			{ m_value = (boost::format("%d") % new_value).str(); };
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -202,7 +202,7 @@ class boolean
 		virtual void clone(std::unique_ptr<value> & p_v) const;
 		virtual ~boolean();
 
-		bool const get() const	{ return m_value;};
+		bool const get() const		{ return m_value;};
 		void set(bool new_value)	{ m_value = new_value; };
 };
 

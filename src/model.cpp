@@ -108,7 +108,7 @@ void model::get_by_criterias
 	if(0 < criterias.size())
 		builder.builder::where(criterias.cbegin()->first, criterias.cbegin()->second) ;
 
-	webpp::query::query query {builder};
+	auto query = webpp::query::query(builder);
 
 	std::unique_ptr<mysql::result> p_result;
 	mp_impl->p_connection->query(p_result, query);
