@@ -160,10 +160,16 @@ void build(std::shared_ptr<value> & p_node)
 
 namespace comparison {
 
-bool operator ==(boolean const & lhs, webpp::query::value const & rhs);
-bool operator ==(string const & lhs, webpp::query::value const & rhs);
-bool operator ==(bool const & lhs, webpp::query::value const & rhs);
-bool operator ==(std::string const & lhs, webpp::query::value const & rhs);
+bool operator ==(value const & lhs, value const & rhs);
+bool operator ==(boolean const & lhs, value const & rhs);
+bool operator ==(string const & lhs, value const & rhs);
+bool operator ==(bool const & lhs, value const & rhs);
+bool operator ==(std::string const & lhs, value const & rhs);
+
+inline bool operator !=(value const & lhs, value const & rhs)
+{
+	return !(lhs == rhs);
+}
 
 inline bool operator !=(webpp::query::value const & lhs, std::nullptr_t)
 {
