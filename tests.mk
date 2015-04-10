@@ -14,6 +14,7 @@ TESTS= \
 	   $(TESTDIR)/test_query \
 	   $(TESTDIR)/test_model \
 	   $(TESTDIR)/test_http_request \
+	   $(TESTDIR)/test_http_response \
 	   $(TESTDIR)/test_router \
 	   $(TESTDIR)/test_json \
 	   $(TESTDIR)/test_url \
@@ -33,6 +34,11 @@ tests/%.o: tests/%.cpp
 # Query test ###########################################################
 $(TESTDIR)/test_query.so: src/query.o src/query_var.o src/query_clause.o src/query_builder.o $(TESTDIR)/test_query.o
 $(TESTDIR)/test_query: $(TESTDIR)/test_query.so
+	$(UNITTESTER) $^
+
+# HTTP input response ###################################################
+$(TESTDIR)/test_http_response.so: src/http_response.o $(TESTDIR)/test_http_response.o
+$(TESTDIR)/test_http_response: $(TESTDIR)/test_http_response.so
 	$(UNITTESTER) $^
 
 # HTTP input request ###################################################

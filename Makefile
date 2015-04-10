@@ -1,6 +1,7 @@
 include common.mk
 
 CPPFILES= \
+	  http_response.cpp \
 	  http_request.cpp \
 	  router.cpp \
 	  url.cpp \
