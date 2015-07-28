@@ -32,11 +32,12 @@ static std::map<std::string, std::string> const make_environment()
 	return environment;
 }
 
-void from_cgi(request & r)
+void from_cgi(std::unique_ptr<request> & p_r)
 {
+	p_r = std::make_unique<request>();
 	auto env = make_environment();
-	r.method(env["REQUEST_METHOD"]);
-	r.uri(env["REQUEST_URI"]);
+	p_r->method(env["REQUEST_METHOD"]);
+	p_r->uri(env["REQUEST_URI"]);
 
 }
 

@@ -26,9 +26,9 @@ AfterEach(http_request)
 
 Ensure(http_request, build_simple_request)
 {
-	webpp::http::request request;
-	webpp::http::from_cgi(request);
+	std::unique_ptr<webpp::http::request> p_request;
+	webpp::http::from_cgi(p_request);
 
-	assert_that(request.method().c_str(), is_equal_to_string("GET"));
-	assert_that(request.uri().c_str(), is_equal_to_string("/"));
+	assert_that(p_request->method().c_str(), is_equal_to_string("GET"));
+	assert_that(p_request->uri().c_str(), is_equal_to_string("/"));
 }

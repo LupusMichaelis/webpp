@@ -2,19 +2,21 @@
 #	define HPP_REQUEST_HTTP_WEBPP
 
 #	include <string>
+#	include "memory.hpp"
 
 namespace webpp { namespace http {
 
 class request;
 
-void from_cgi(request & r);
+void from_cgi(std::unique_ptr<request> & p_r);
 
 class request
 {
 	public:
-		virtual ~request();
 		request();
+		~request();
 
+	public:
 		void method(std::string const & r);
 		void uri(std::string const & u);
 

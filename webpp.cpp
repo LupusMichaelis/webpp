@@ -98,11 +98,11 @@ int main()
 		std::cout << p.first << ":" << p.second << "\n";
 	std::cout << "\n";
 
-	webpp::http::request request;
-	webpp::http::from_cgi(request);
+	std::unique_ptr<webpp::http::request> p_request;
+	webpp::http::from_cgi(p_request);
 
 	std::vector<std::string> segments;
-	boost::split(segments, request.uri(), boost::is_any_of("/"));
+	boost::split(segments, p_request->uri(), boost::is_any_of("/"));
 
 	std::string table_name {segments[1]};
 
@@ -138,9 +138,9 @@ int main()
 
 	m.get_by_criterias(p_fields, p_rows, table_name, criterias);
 
-	if("GET" == request.method())
+	if("GET" == p_request->method())
 		print_json(std::cout, *p_fields, *p_rows);
-	else if("POST" == request.method())
+	else if("POST" == p_request->method())
 	{
 		std::unique_ptr<webpp::model::criteria_list_type> p_submitted;
 		json_extract(p_submitted, std::cin);
@@ -164,7 +164,7 @@ int main()
 	}
 	else
 	{
-		throw boost::format("Unknown method '%s'") % request.method();
+		throw boost::format("Unknown method '%s'") % p_request->method();
 	}
 
 
