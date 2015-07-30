@@ -38,6 +38,7 @@ void from_cgi(std::unique_ptr<request> & p_r)
 	auto env = make_environment();
 	p_r->method(env["REQUEST_METHOD"]);
 	p_r->uri(env["REQUEST_URI"]);
+	p_r->content_type(env["CONTENT_TYPE"]);
 
 }
 
@@ -55,19 +56,29 @@ void request::method(std::string const & m)
 	m_method = m;
 }
 
-void request::uri(std::string const & u)
-{
-	m_uri = u;
-}
-
 std::string const & request::method() const
 {
 	return m_method;
 }
 
+void request::uri(std::string const & u)
+{
+	m_uri = u;
+}
+
 std::string const & request::uri() const
 {
 	return m_uri;
+}
+
+void request::content_type(std::string const & ct)
+{
+	m_content_type = ct;
+}
+
+std::string const & request::content_type() const
+{
+	return m_content_type;
 }
 
 }}; // namespace webpp::http

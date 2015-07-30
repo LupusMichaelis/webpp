@@ -19,14 +19,17 @@ class request
 	public:
 		void method(std::string const & r);
 		void uri(std::string const & u);
+		void content_type(std::string const & ct);
 
 		std::string const & method() const;
 		std::string const & uri() const;
+		std::string const & content_type() const;
 
 	private:
 
 		std::string m_method;
 		std::string m_uri;
+		std::string m_content_type;
 };
 
 }} // namespace webpp::http
