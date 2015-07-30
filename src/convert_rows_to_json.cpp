@@ -53,9 +53,9 @@ convert_mysql_to_json::~convert_mysql_to_json()
 {
 }
 
-json::array & cast(json::array & array
-		, model::field_list_type & fields
-		, model::row_list_type & rows
+void cast(json::array & array
+		, model::field_list_type const & fields
+		, model::row_list_type const & rows
 		)
 {
 	convert_mysql_to_json converter;
@@ -78,8 +78,6 @@ json::array & cast(json::array & array
 
 		json::add(array, p_object);
 	}
-
-	return array;
 }
 
 } // namespace webpp

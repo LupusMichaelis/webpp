@@ -35,9 +35,9 @@ class convert_mysql_to_json
 		virtual ~convert_mysql_to_json();
 };
 
-json::array & cast(webpp::json::array & array
-		, webpp::model::field_list_type & fields
-		, webpp::model::row_list_type & rows
+void cast(webpp::json::array & array
+		, webpp::model::field_list_type const & fields
+		, webpp::model::row_list_type const & rows
 		);
 
 }; // namespace webpp
