@@ -12,6 +12,11 @@ response::~response()
 {
 }
 
+void response::body(std::string const & new_body)
+{
+	m_body = new_body;
+}
+
 std::string const & response::body() const
 {
 	return m_body;

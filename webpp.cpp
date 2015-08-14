@@ -45,35 +45,95 @@ void json_extract
 	std::swap(p_out, p_submitted);
 }
 
-std::map<std::string, std::string> const make_header()
-{
-	using namespace boost::assign;
-
-	std::map<std::string, std::string> header;
-	insert(header)
+/*
 		("Status", "200 OK")
+	//	("Status", "404 Not Found")
 		("Content-type", "application/json")
-		;
+	//	("Content-type", "text/html")
+*/
 
-	return header;
-}
+class webpp_response_body
+	: public webpp::http::response::body
+{
+	public:
+		virtual void feed(webpp::model::field_list_type const & fields, webpp::model::row_list_type const & rows) = 0;
+		virtual void print(std::ostream & out) const = 0;
+		virtual ~webpp_response_body() {};
+};
+
+class webpp_response_body_json
+	: public webpp_response_body
+{
+	public:
+		void feed(webpp::model::field_list_type const & fields, webpp::model::row_list_type const & rows)
+		{
+			webpp::json::build(mp_content);
+			webpp::cast(*mp_content, fields, rows);
+		}
+
+		void print(std::ostream & out) const
+		{
+			if(0u == mp_content->values().size())
+				webpp::json::dump(out, webpp::json::null());
+			else if(1u == mp_content->values().size())
+				webpp::json::dump(out, static_cast<webpp::json::value&>(*mp_content->values()[0]));
+			else
+				webpp::json::dump(out, static_cast<webpp::json::value&>(*mp_content));
+		}
+
+	private:
+		std::unique_ptr<webpp::json::array> mp_content;
+};
+
+class webpp_response_body_html
+	: public webpp_response_body
+{
+	public:
+		void feed(webpp::model::field_list_type const & fields, webpp::model::row_list_type const & rows)
+		{
+			m_json_view.feed(fields, rows);
+		}
+
+		void print(std::ostream & out) const
+		{
+			out << "<!DOCTYPE html>\n"
+				"<html>\n"
+				"\t<head>\n\t\t<title>" << "Some data" << "</title>\n\t</head>\n"
+				"\t<body>\n"
+				"\t\t";
+
+			out << "\t\t\t<pre>\n";
+			m_json_view.print(out);
+			out << "\t\t\t</pre>\n";
+
+			out << "\n"
+				"\t</body>\n"
+				"</html>\n";
+		}
+
+	private:
+		webpp_response_body_json m_json_view;
+};
+
 
 class program
 {
-	private:
-		std::unique_ptr<webpp::http::request> mp_request;
-		std::unique_ptr<webpp::http::response> mp_response;
-
 	public:
+		program()
+			: mp_request{std::make_unique<webpp::http::request>()}
+			, mp_response{std::make_unique<webpp::http::response>()}
+		{
+		}
+
 		int operator() ()
 		{
-			auto header = make_header();
-
-			for(auto p: header)
-				std::cout << p.first << ":" << p.second << "\n";
-			std::cout << "\n";
-
 			webpp::http::from_cgi(mp_request);
+
+			{
+				auto it_found = std::find(m_supported_content_types.cbegin(), m_supported_content_types.cend(), mp_request->content_type());
+				if(m_supported_content_types.cend() == it_found)
+					throw boost::format("Content type '%s' not supported") % mp_request->content_type();
+			}
 
 			std::vector<std::string> segments;
 			boost::split(segments, mp_request->uri(), boost::is_any_of("/"));
@@ -141,52 +201,31 @@ class program
 				throw boost::format("Unknown method '%s'") % mp_request->method();
 			}
 
-
 			return 0;
 		}
 
 		void print(std::ostream & out, webpp::model::field_list_type const & fields, webpp::model::row_list_type const & rows)
 		{
+			std::unique_ptr<webpp_response_body> p_body;
 			if("application/json" == mp_request->content_type())
-				print_json(out, fields, rows);
+				p_body = std::make_unique<webpp_response_body_json>();
 			else if("text/html" == mp_request->content_type())
-				print_html(out, fields, rows);
+				p_body = std::make_unique<webpp_response_body_html>();
 			else
 				throw "No default view";
+
+			p_body->feed(fields, rows);
+			p_body->print(out);
 		}
 
-		void print_json(std::ostream & out, webpp::model::field_list_type const & fields, webpp::model::row_list_type const & rows)
-		{
-			std::unique_ptr<webpp::json::array> p_array;
-			webpp::json::build(p_array);
-			webpp::cast(*p_array, fields, rows);
+	private:
+		std::unique_ptr<webpp::http::request> mp_request;
+		std::unique_ptr<webpp::http::response> mp_response;
 
-			if(0u == p_array->values().size())
-				webpp::json::dump(out, webpp::json::null());
-			else if(1u == p_array->values().size())
-				webpp::json::dump(out, static_cast<webpp::json::value&>(*p_array->values()[0]));
-			else
-				webpp::json::dump(out, static_cast<webpp::json::value&>(*p_array));
-		}
-
-		void print_html(std::ostream & out, webpp::model::field_list_type const & fields, webpp::model::row_list_type const & rows)
-		{
-			out << "<!DOCTYPE html>\n"
-				"<html>\n"
-				"\t<head>\n\t\t<title>" << "Some data" << "</title>\n\t</head>\n"
-				"\t<body>\n"
-				"\t\t";
-
-			out << "\t\t\t<pre>\n";
-			print_json(out, fields, rows);
-			out << "\t\t\t</pre>\n";
-
-			out << "\n"
-				"\t</body>\n"
-				"</html>\n";
-		}
-
+		static std::vector<std::string> const m_supported_content_types;
 };
+
+std::vector<std::string> const program::m_supported_content_types {"application/json", "text/html"};
 
 int main()
 {

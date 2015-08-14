@@ -26,7 +26,6 @@ class request
 		std::string const & content_type() const;
 
 	private:
-
 		std::string m_method;
 		std::string m_uri;
 		std::string m_content_type;
