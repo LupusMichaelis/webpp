@@ -127,21 +127,28 @@ class program
 
 		int operator() ()
 		{
+			do_find_route();
+			do_process();
+			do_print_out();
+			return 0;
+		}
+
+		void do_find_route()
+		{
 			webpp::http::from_cgi(mp_request);
 
 			{
 				auto it_found = std::find(m_supported_content_types.cbegin(), m_supported_content_types.cend(), mp_request->content_type());
 				if(m_supported_content_types.cend() == it_found)
-					throw boost::format("Content type '%s' not supported") % mp_request->content_type();
+					mp_request->content_type(m_default_content_type);
 			}
 
 			std::vector<std::string> segments;
 			boost::split(segments, mp_request->uri(), boost::is_any_of("/"));
 
-			std::string table_name {segments[1]};
+			m_table_name = segments[1];
 
 			std::string criteria;
-			webpp::model::criteria_list_type criterias;
 
 			if(segments.size() > 2)
 			{
@@ -158,34 +165,36 @@ class program
 					std::shared_ptr<webpp::query::value> p_value { std::make_shared<webpp::query::string>(value) };
 
 					auto criteria = std::make_pair(key, p_value);
-					criterias.insert(criteria);
+					m_criterias.insert(criteria);
 				}
 			}
+		}
+
+		void do_process()
+		{
+			if("POST" != mp_request->method() and "GET" != mp_request->method())
+				throw boost::format("Unknown method '%s'") % mp_request->method();
 
 			webpp::model m;
-			std::unique_ptr<webpp::model::row_list_type> p_rows;
-			std::unique_ptr<webpp::model::field_list_type> p_fields;
 
 			auto p_con = std::make_shared<webpp::mysql::connection>();
 			p_con->connect("localhost", "test", "test", "test", 3308);
 			m.connection(p_con);
 
-			m.get_by_criterias(p_fields, p_rows, table_name, criterias);
+			m.get_by_criterias(mp_fields, mp_rows, m_table_name, m_criterias);
 
-			if("GET" == mp_request->method())
-				print(std::cout, *p_fields, *p_rows);
-			else if("POST" == mp_request->method())
+			if("POST" == mp_request->method())
 			{
 				std::unique_ptr<webpp::model::criteria_list_type> p_submitted;
 				json_extract(p_submitted, std::cin);
 
 				webpp::model::row_list_type updated_rows;
-				for(auto row: *p_rows)
+				for(auto row: *mp_rows)
 				{
 					webpp::model::row_type updated_row;
-					for(size_t idx = 0; idx < p_fields->size(); ++idx)
+					for(size_t idx = 0; idx < mp_fields->size(); ++idx)
 					{
-						webpp::query::schema::field field {p_fields->at(idx)};
+						webpp::query::schema::field field {mp_fields->at(idx)};
 						auto const & p_value = (*p_submitted)[field];
 
 						updated_row.push_back(p_value);
@@ -194,14 +203,14 @@ class program
 					updated_rows.push_back(updated_row);
 				}
 
-				m.update(table_name, *p_fields, *p_rows, updated_rows, criterias);
+				m.update(m_table_name, *mp_fields, *mp_rows, updated_rows, m_criterias);
 			}
-			else
-			{
-				throw boost::format("Unknown method '%s'") % mp_request->method();
-			}
+		}
 
-			return 0;
+		void do_print_out()
+		{
+			if("GET" == mp_request->method())
+				print(std::cout, *mp_fields, *mp_rows);
 		}
 
 		void print(std::ostream & out, webpp::model::field_list_type const & fields, webpp::model::row_list_type const & rows)
@@ -219,13 +228,20 @@ class program
 		}
 
 	private:
-		std::unique_ptr<webpp::http::request> mp_request;
-		std::unique_ptr<webpp::http::response> mp_response;
+		std::unique_ptr<webpp::http::request>			mp_request;
+		std::unique_ptr<webpp::http::response>			mp_response;
 
-		static std::vector<std::string> const m_supported_content_types;
+		std::string										m_table_name;
+		webpp::model::criteria_list_type				m_criterias;
+		std::unique_ptr<webpp::model::row_list_type>	mp_rows;
+		std::unique_ptr<webpp::model::field_list_type>	mp_fields;
+
+		static std::vector<std::string> const			m_supported_content_types;
+		static std::string const						m_default_content_type;
 };
 
 std::vector<std::string> const program::m_supported_content_types {"application/json", "text/html"};
+std::string const program::m_default_content_type = program::m_supported_content_types[0];
 
 int main()
 {
