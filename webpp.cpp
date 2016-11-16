@@ -1,4 +1,5 @@
 #include "src/convert_rows_to_json.hpp"
+#include "src/router.hpp"
 #include "src/http_request.hpp"
 #include "src/http_response.hpp"
 #include "src/json.hpp"
@@ -143,16 +144,17 @@ class program
 					mp_request->content_type(m_default_content_type);
 			}
 
-			std::vector<std::string> segments;
-			boost::split(segments, mp_request->uri(), boost::is_any_of("/"));
+			webpp::router::simple routing;
+			std::unique_ptr<std::vector<std::string>> p_segments;
+			routing.parse(p_segments, mp_request->uri());
 
-			m_table_name = segments[1];
+			m_table_name = (*p_segments)[1];
 
 			std::string criteria;
 
-			if(segments.size() > 2)
+			if(p_segments->size() > 2)
 			{
-				criteria = segments[2];
+				criteria = (*p_segments)[2];
 
 				boost::smatch results;
 				boost::regex const re { "^([^=]+)=([^=]+)$" };
