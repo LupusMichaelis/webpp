@@ -74,6 +74,9 @@ class webpp_response_body_json
 
 		void print(std::ostream & out) const
 		{
+			if(!mp_content)
+				return;
+
 			if(0u == mp_content->values().size())
 				webpp::json::dump(out, webpp::json::null());
 			else if(1u == mp_content->values().size())
@@ -144,17 +147,17 @@ class program
 					mp_request->content_type(m_default_content_type);
 			}
 
-			webpp::router::simple routing;
-			std::unique_ptr<std::vector<std::string>> p_segments;
-			routing.parse(p_segments, mp_request->uri());
+			m_router.parse(mp_request->uri());
 
-			m_table_name = (*p_segments)[1];
+			if(m_router.is_root())
+				return;
 
-			std::string criteria;
+			m_router.get_segment(m_table_name, 1);
 
-			if(p_segments->size() > 2)
+			if(m_router.has_segment(2))
 			{
-				criteria = (*p_segments)[2];
+				std::string criteria;
+				m_router.get_segment(criteria, 2);
 
 				boost::smatch results;
 				boost::regex const re { "^([^=]+)=([^=]+)$" };
@@ -172,15 +175,39 @@ class program
 			}
 		}
 
+		void do_write_log(const char * p_message)
+		{
+			std::cerr << boost::format("LOG: '%s'\n") % p_message;
+		}
+
 		void do_process()
 		{
 			if("POST" != mp_request->method() and "GET" != mp_request->method())
 				throw boost::format("Unknown method '%s'") % mp_request->method();
 
+			if(m_router.is_root())
+			{
+				if("POST" == mp_request->method())
+					; // Site wide request
+				else// if("GET" == mp_request->method())
+					; // give help infos
+				return;
+			}
+
 			webpp::model m;
 
 			auto p_con = std::make_shared<webpp::mysql::connection>();
-			p_con->connect("localhost", "test", "test", "test", 3308);
+			try
+			{
+				p_con->connect("localhost", "test", "test", "test", 3308);
+			}
+			catch(const char* p_message)
+			{
+				mp_response->status(500);
+				do_write_log(p_message);
+				return;
+			}
+
 			m.connection(p_con);
 
 			m.get_by_criterias(mp_fields, mp_rows, m_table_name, m_criterias);
@@ -211,8 +238,23 @@ class program
 
 		void do_print_out()
 		{
+			std::cout << "\n";// end of headers
 			if("GET" == mp_request->method())
-				print(std::cout, *mp_fields, *mp_rows);
+			{
+				if(200 == mp_response->status())
+					print(std::cout, *mp_fields, *mp_rows);
+				else
+				{
+					std::unique_ptr<webpp_response_body> p_body;
+					if("application/json" == mp_request->content_type())
+						p_body = std::make_unique<webpp_response_body_json>();
+					else if("text/html" == mp_request->content_type())
+						p_body = std::make_unique<webpp_response_body_html>();
+					else
+						throw "No default view";
+					p_body->print(std::cout);
+				}
+			}
 		}
 
 		void print(std::ostream & out, webpp::model::field_list_type const & fields, webpp::model::row_list_type const & rows)
