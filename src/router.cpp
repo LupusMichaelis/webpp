@@ -5,19 +5,17 @@
 
 namespace webpp { namespace router {
 
-simple::simple()
+actual::actual()
 {
 }
 
-simple::~simple()
+actual::~actual()
 {
 }
 
-void simple::parse(std::unique_ptr<segment_list> & p_segments, std::string const & s) const
+void actual::parse(std::string const & s)
 {
-	segment_list segments;
-	boost::split(segments, s, boost::is_any_of("/"));
-	p_segments = std::move(std::make_unique<segment_list>(segments));
+	boost::split(m_segments, s, boost::is_any_of("/"));
 }
 
 };

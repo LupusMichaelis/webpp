@@ -233,6 +233,8 @@ class program
 		std::unique_ptr<webpp::http::request>			mp_request;
 		std::unique_ptr<webpp::http::response>			mp_response;
 
+		webpp::router::actual m_router;
+
 		std::string										m_table_name;
 		webpp::model::criteria_list_type				m_criterias;
 		std::unique_ptr<webpp::model::row_list_type>	mp_rows;

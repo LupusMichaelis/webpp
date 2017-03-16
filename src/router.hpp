@@ -11,13 +11,36 @@ namespace router {
 
 typedef std::vector<std::string> segment_list;
 
-class simple
+class actual
 {
 	public:
-		simple();
-		~simple();
+		actual();
+		~actual();
 
-		void parse(std::unique_ptr<segment_list> & p_segments, std::string const & s) const;
+		void parse(std::string const & s);
+
+		bool is_root() const
+		{
+			return m_segments.size() == 1;
+		}
+
+		void get_segment(std::string & segment, size_t const idx) const
+		{
+			segment = m_segments.at(idx);
+		}
+
+		bool has_segment(size_t const idx) const
+		{
+			return idx < m_segments.size();
+		}
+
+		size_t get_segment_count() const
+		{
+			return m_segments.size();
+		}
+
+	private:
+		segment_list m_segments;
 };
 
 } // namespace router
