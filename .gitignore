@@ -2,6 +2,8 @@ webpp
 core
 ./webpp
 
+conf/*.ini
+
 *.vim
 .*.swp
 *.o

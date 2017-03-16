@@ -14,6 +14,7 @@
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include <iostream>
+#include <fstream>
 #include <iterator>
 #include <map>
 #include <sstream>
@@ -199,7 +200,44 @@ class program
 			auto p_con = std::make_shared<webpp::mysql::connection>();
 			try
 			{
-				p_con->connect("localhost", "test", "test", "test", 3308);
+				std::ifstream in {"conf/database.ini"};
+				std::unique_ptr<webpp::json::value> p_conf;
+				webpp::json::parse(p_conf, in);
+
+				std::string host;
+				std::string user;
+				std::string password;
+				std::string space;
+				unsigned port;
+
+				for(auto const & property: dynamic_cast<webpp::json::object&>(*p_conf).properties())
+					if("host" == property.first)
+					{
+						auto const & json_literal = dynamic_cast<webpp::json::string&>(*property.second);
+						host = json_literal.get();
+					}
+					else if("user" == property.first)
+					{
+						auto const & json_literal = dynamic_cast<webpp::json::string&>(*property.second);
+						user = json_literal.get();
+					}
+					else if("password" == property.first)
+					{
+						auto const & json_literal = dynamic_cast<webpp::json::string&>(*property.second);
+						password = json_literal.get();
+					}
+					else if("space" == property.first)
+					{
+						auto const & json_literal = dynamic_cast<webpp::json::string&>(*property.second);
+						space = json_literal.get();
+					}
+					else if("port" == property.first)
+					{
+						auto const & json_literal = dynamic_cast<webpp::json::number&>(*property.second);
+						port = std::atoi(json_literal.get().c_str());
+					}
+
+				p_con->connect(host, user, password, space, port);
 			}
 			catch(const char* p_message)
 			{

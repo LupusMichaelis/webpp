@@ -1,0 +1,7 @@
+{
+	host: "localhost",
+	user: "",
+	password: "",
+	space: "xxx",
+	port: 3308);
+}
