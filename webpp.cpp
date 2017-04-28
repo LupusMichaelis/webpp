@@ -1,5 +1,6 @@
 #include "src/convert_rows_to_json.hpp"
 #include "src/router.hpp"
+#include "src/configuration.hpp"
 #include "src/http_request.hpp"
 #include "src/http_response.hpp"
 #include "src/json.hpp"
@@ -125,9 +126,10 @@ class webpp_response_body_html
 class program
 {
 	public:
-		program()
+		program(int argc, char * argv[])
 			: mp_request{std::make_unique<webpp::http::request>()}
 			, mp_response{std::make_unique<webpp::http::response>()}
+			, mp_configuration{std::make_unique<webpp::configuration>(argc, argv)}
 		{
 		}
 
@@ -141,7 +143,7 @@ class program
 
 		void do_find_route()
 		{
-			webpp::http::from_cgi(mp_request);
+			webpp::http::from_cgi(*mp_configuration, mp_request);
 
 			{
 				auto it_found = std::find(m_supported_content_types.cbegin(), m_supported_content_types.cend(), mp_request->content_type());
@@ -201,8 +203,8 @@ class program
 			auto p_con = std::make_shared<webpp::mysql::connection>();
 			try
 			{
-				auto env = webpp::http::make_environment();
-				boost::filesystem::path const conf_dir { env["WEBPP_CONF_DIR"] };
+				boost::filesystem::path const conf_dir {
+					mp_configuration->get_environment().at("WEBPP_CONF_DIR")};
 				std::ifstream in { (conf_dir / "database.ini").string()};
 				std::unique_ptr<webpp::json::value> p_conf;
 				webpp::json::parse(p_conf, in);
@@ -339,13 +341,15 @@ class program
 
 		static std::vector<std::string> const			m_supported_content_types;
 		static std::string const						m_default_content_type;
+
+		std::unique_ptr<webpp::configuration>			mp_configuration;
 };
 
 std::vector<std::string> const program::m_supported_content_types {"application/json", "text/html"};
 std::string const program::m_default_content_type = program::m_supported_content_types[0];
 
-int main()
+int main(int argc, char *argv[])
 {
-	program m;
+	program m(argc, argv);
 	return m();
 }

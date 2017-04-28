@@ -1,45 +1,31 @@
 
 #include "http_request.hpp"
+#include "configuration.hpp"
 
 #include <map>
 #include <string>
 #include <algorithm>
 #include <iostream>
 
-extern char const ** environ;
-
 namespace webpp { namespace http {
 
-/*static*/ std::map<std::string, std::string> const make_environment()
+bool from_cgi(configuration const & c, std::unique_ptr<request> & p_r)
 {
-	std::map<std::string, std::string> environment;
+	auto const & env = c.get_environment();
 
-	char const ** p = environ;
-	while(*p)
+	p_r = std::make_unique<request>();
+	try
 	{
-		std::string const pair {*p};
-		auto colon = std::find(pair.cbegin(), pair.cend(), '=');
-		if(pair.cend() != colon)
-		{
-			std::string key {pair.cbegin(), colon};
-			std::string value {colon + 1, pair.cend()};
-
-			environment[key] = value;
-		}
-
-		++p;
+		p_r->method(env.at("REQUEST_METHOD"));
+		p_r->uri(env.at("REQUEST_URI"));
+		p_r->content_type(env.at("CONTENT_TYPE"));
+	}
+	catch(std::out_of_range const )
+	{
+		return false;
 	}
 
-	return environment;
-}
-
-void from_cgi(std::unique_ptr<request> & p_r)
-{
-	p_r = std::make_unique<request>();
-	auto env = make_environment();
-	p_r->method(env["REQUEST_METHOD"]);
-	p_r->uri(env["REQUEST_URI"]);
-	p_r->content_type(env["CONTENT_TYPE"]);
+	return true;
 }
 
 request::~request()
