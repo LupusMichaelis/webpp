@@ -4,12 +4,13 @@
 #include <map>
 #include <string>
 #include <algorithm>
+#include <iostream>
 
 extern char const ** environ;
 
 namespace webpp { namespace http {
 
-static std::map<std::string, std::string> const make_environment()
+/*static*/ std::map<std::string, std::string> const make_environment()
 {
 	std::map<std::string, std::string> environment;
 
@@ -39,7 +40,6 @@ void from_cgi(std::unique_ptr<request> & p_r)
 	p_r->method(env["REQUEST_METHOD"]);
 	p_r->uri(env["REQUEST_URI"]);
 	p_r->content_type(env["CONTENT_TYPE"]);
-
 }
 
 request::~request()

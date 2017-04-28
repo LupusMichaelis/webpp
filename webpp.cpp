@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
+#include <boost/filesystem.hpp>
 #include <iostream>
 #include <fstream>
 #include <iterator>
@@ -178,7 +179,7 @@ class program
 
 		void do_write_log(const char * p_message)
 		{
-			std::cerr << boost::format("LOG: '%s'\n") % p_message;
+			std::cerr << boost::format("webpp: '%s'\n") % p_message;
 		}
 
 		void do_process()
@@ -200,7 +201,9 @@ class program
 			auto p_con = std::make_shared<webpp::mysql::connection>();
 			try
 			{
-				std::ifstream in {"conf/database.ini"};
+				auto env = webpp::http::make_environment();
+				boost::filesystem::path const conf_dir { env["WEBPP_CONF_DIR"] };
+				std::ifstream in { (conf_dir / "database.ini").string()};
 				std::unique_ptr<webpp::json::value> p_conf;
 				webpp::json::parse(p_conf, in);
 
@@ -242,7 +245,8 @@ class program
 			catch(const char* p_message)
 			{
 				mp_response->status(500);
-				do_write_log(p_message);
+				auto const err = (boost::format("Reading conf failed '%s'") % p_message).str();
+				do_write_log(err.c_str());
 				return;
 			}
 
@@ -276,11 +280,13 @@ class program
 
 		void do_print_out()
 		{
-			std::cout << "\n";// end of headers
+			std::stringstream out;
+			out.unsetf(std::ios_base::skipws);
+
 			if("GET" == mp_request->method())
 			{
 				if(200 == mp_response->status())
-					print(std::cout, *mp_fields, *mp_rows);
+					print(out, *mp_fields, *mp_rows);
 				else
 				{
 					std::unique_ptr<webpp_response_body> p_body;
@@ -290,9 +296,20 @@ class program
 						p_body = std::make_unique<webpp_response_body_html>();
 					else
 						throw "No default view";
-					p_body->print(std::cout);
+					p_body->print(out);
 				}
 			}
+
+			std::cout << "Content-type: " << mp_request->content_type() << "\n";
+			std::cout << "Content-length: " << out.str().length() + 2 << "\n";
+			std::cout << "\n";// end of headers
+
+			std::copy(std::istream_iterator<char>(out)
+				, std::istream_iterator<char>()
+				, std::ostream_iterator<char>(std::cout, "")
+				);
+
+			std::cout << "\n\n";// end of body
 		}
 
 		void print(std::ostream & out, webpp::model::field_list_type const & fields, webpp::model::row_list_type const & rows)

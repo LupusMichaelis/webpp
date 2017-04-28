@@ -1,13 +1,15 @@
 #ifndef HPP_REQUEST_HTTP_WEBPP
 #	define HPP_REQUEST_HTTP_WEBPP
 
-#	include <string>
 #	include "memory.hpp"
+#	include <string>
+#	include <map>
 
 namespace webpp { namespace http {
 
 class request;
 
+std::map<std::string, std::string> const make_environment();
 void from_cgi(std::unique_ptr<request> & p_r);
 
 class request
