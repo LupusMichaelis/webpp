@@ -1,0 +1,7 @@
+curl -i -X GET http://webpp.localhost/stories
+curl -i -X GET http://webpp.localhost/stories/id=1
+curl -i -X POST --data-binary @story.json http://webpp.localhost/stories/id=1
+
+export REQUEST_URI=/stories/id=1 REQUEST_METHOD=GET; gdb ./webpp
+export REQUEST_URI=/stories/id=1 REQUEST_METHOD=POST; gdb ./webpp
+run < story.json
