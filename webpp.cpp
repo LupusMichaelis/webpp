@@ -143,12 +143,24 @@ class program
 
 		void do_find_route()
 		{
-			webpp::http::from_cgi(*mp_configuration, mp_request);
+			if(!webpp::http::from_cgi(*mp_configuration, mp_request))
+			{
+				std::cerr << boost::format("Failed to parse CGI input\n");
+				return;
+			}
 
 			{
-				auto it_found = std::find(m_supported_content_types.cbegin(), m_supported_content_types.cend(), mp_request->content_type());
-				if(m_supported_content_types.cend() == it_found)
-					mp_request->content_type(m_default_content_type);
+				auto it_found = std::find
+					( m_supported_content_types.cbegin()
+					, m_supported_content_types.cend()
+					, mp_request->content_type()
+					);
+
+				mp_request->content_type(
+					m_supported_content_types.cend() == it_found
+					? m_default_content_type
+					: *it_found
+					);
 			}
 
 			m_router.parse(mp_request->uri());
@@ -187,7 +199,7 @@ class program
 		void do_process()
 		{
 			if("POST" != mp_request->method() and "GET" != mp_request->method())
-				throw boost::format("Unknown method '%s'") % mp_request->method();
+				throw (boost::format("Unknown method '%s'") % mp_request->method()).str();
 
 			if(m_router.is_root())
 			{
@@ -350,6 +362,13 @@ std::string const program::m_default_content_type = program::m_supported_content
 
 int main(int argc, char *argv[])
 {
-	program m(argc, argv);
-	return m();
+	try
+	{
+		program m(argc, argv);
+		return m();
+	}
+	catch(std::string const & s)
+	{
+		std::cerr << s << "\n";
+	}
 }
