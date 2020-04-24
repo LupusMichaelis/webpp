@@ -1,10 +1,10 @@
-
 #include "mysql_connection.hpp"
 #include "mysql_result.hpp"
 #include "query_var.hpp"
 
 #include "query.hpp"
 
+#include <boost/format.hpp>
 #include <mysql.h>
 #include <cstdlib>
 
@@ -86,7 +86,7 @@ void connection::query(std::unique_ptr<result> & p_result, webpp::query::query c
 	std::string query = q.str();
 
 	if(mysql_query(mp_impl->p_mysql, query.c_str()))
-		throw mysql_error(mp_impl->p_mysql);
+		throw (boost::format("MySQL Error '%s'") % mysql_error(mp_impl->p_mysql)).str();
 
 	MYSQL_RES * p_native_result = NULL;
 	p_native_result = mysql_store_result(mp_impl->p_mysql);
@@ -99,7 +99,10 @@ void connection::query(std::unique_ptr<result> & p_result, webpp::query::query c
 	if(p_native_result)
 	{
 		if(0 == mysql_num_rows(p_native_result))
-			throw "Too much or too many results";
+		{
+			std::swap(p_result, tp_result);
+			return;
+		}
 
 		result::field_list_type field_list;
 		while(MYSQL_FIELD * field = mysql_fetch_field(p_native_result))
