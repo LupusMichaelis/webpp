@@ -2,6 +2,17 @@
 template <typename base_type, typename former_type, typename latter_type>
 struct compare_traits
 {
+	/*
+	std::conditional
+		< (std::is_base_of<base_type, former_type>::value
+				or std::is_same<base_type, former_type>::value)
+			and (std::is_base_of<base_type, latter_type>::value
+				or std::is_same<base_type, former_type>::value)
+		, std::true_type
+		, std::false_type
+		>::type is_valid;
+	*/
+
 	static void constraint()
 	{
 		former_type * p_former = nullptr;
