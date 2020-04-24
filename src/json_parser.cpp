@@ -7,6 +7,8 @@
 
 namespace webpp { namespace json {
 
+#define MALFORMED "Malformed JSON string"
+
 void skip(char & c, std::istream & in)
 {
 	if(in.eof())
@@ -128,7 +130,7 @@ void parser::parse(std::unique_ptr<value> & p_value, std::istream & in)
 			}
 
 	if(!p_root)
-		throw "Malformed";
+		throw MALFORMED;
 
 	p_root->parse(c, in);
 	p_value = std::move(p_root);
@@ -147,7 +149,7 @@ void parser::parse(std::unique_ptr<value> & p_value, char & c, std::istream & in
 		}
 
 	if(!p_node)
-		throw "Malformed";
+		throw MALFORMED;
 
 	p_node->parse(c, in);
 	p_value = std::move(p_node);
@@ -156,7 +158,7 @@ void parser::parse(std::unique_ptr<value> & p_value, char & c, std::istream & in
 void parser::object::parse(char & c, std::istream & in)
 {
 	if(!first_condition(c))
-		throw "Malformed";
+		throw MALFORMED;
 
 	auto p_node = std::make_unique<json::object>();
 
@@ -178,7 +180,7 @@ void parser::object::parse(char & c, std::istream & in)
 		skip_spaces(c, in);
 
 		if(':' != c)
-			throw "Malformed";
+			throw MALFORMED;
 
 		skip(c, in);
 		skip_spaces(c, in);
@@ -202,7 +204,7 @@ void parser::object::parse(char & c, std::istream & in)
 		}
 
 		if(',' != c)
-			throw "Malformed";
+			throw MALFORMED;
 
 	} while(!in.eof());
 
@@ -213,7 +215,7 @@ void parser::object::parse(char & c, std::istream & in)
 void parser::array::parse(char & c, std::istream & in)
 {
 	if(!first_condition(c))
-		throw "Malformed";
+		throw MALFORMED;
 
 	auto p_node = std::make_unique<json::array>();
 	do
@@ -247,7 +249,7 @@ void parser::array::parse(char & c, std::istream & in)
 		}
 
 		if(',' != c)
-			throw "Malformed";
+			throw MALFORMED;
 
 	} while(!in.eof());
 
@@ -260,7 +262,7 @@ void parser::number::parse(char & c, std::istream & in)
 	std::string value;
 
 	if(!first_condition(c))
-		throw "Malformed";
+		throw MALFORMED;
 
 	bool has_sign = false;
 	bool has_decimal = false;
@@ -281,7 +283,7 @@ void parser::number::parse(char & c, std::istream & in)
 			if(has_exponent)
 			{
 				if(has_sign_exponent)
-					throw "Malformed";
+					throw MALFORMED;
 				else
 				{
 					has_sign_exponent = true;
@@ -293,7 +295,7 @@ void parser::number::parse(char & c, std::istream & in)
 		if('+' == c)
 		{
 			if(has_sign)
-				throw "Malformed";
+				throw MALFORMED;
 			else
 			{
 				has_sign = true;
@@ -306,11 +308,11 @@ void parser::number::parse(char & c, std::istream & in)
 			if(has_decimal)
 				if(has_exponent)
 					if(has_decimal_exponent)
-						throw "Malformed";
+						throw MALFORMED;
 					else
 						has_decimal_exponent = true;
 				else
-					throw "Malformed";
+					throw MALFORMED;
 			else
 			{
 				has_decimal = true;
@@ -321,7 +323,7 @@ void parser::number::parse(char & c, std::istream & in)
 		if('e' == c or 'E' == c)
 		{
 			if(has_exponent)
-				throw "Malformed";
+				throw MALFORMED;
 			else
 			{
 				has_exponent = true;
@@ -343,7 +345,7 @@ void parser::number::parse(char & c, std::istream & in)
 void parser::boolean::parse(char & c, std::istream & in)
 {
 	if(!first_condition(c))
-		throw "Malformed";
+		throw MALFORMED;
 
 	json::boolean the_boolean;
 	if('t' == c)
@@ -352,7 +354,7 @@ void parser::boolean::parse(char & c, std::istream & in)
 		in.get(rue, 4);
 
 		if(0 != std::strcmp("rue", rue))
-			throw "Malformed";
+			throw MALFORMED;
 
 		the_boolean.set(true);
 	}
@@ -362,12 +364,12 @@ void parser::boolean::parse(char & c, std::istream & in)
 		in.get(alse, 5);
 
 		if(0 != std::strcmp("alse", alse))
-			throw "Malformed";
+			throw MALFORMED;
 
 		the_boolean.set(false);
 	}
 	else
-		throw "Malformed";
+		throw MALFORMED;
 
 	skip_dirt(c, in);
 
@@ -380,7 +382,7 @@ void parser::string::parse(char & c, std::istream & in)
 	std::string value;
 
 	if(!first_condition(c))
-		throw "Malformed";
+		throw MALFORMED;
 
 	do
 	{
@@ -405,13 +407,13 @@ void parser::string::parse(char & c, std::istream & in)
 void parser::null::parse(char & c, std::istream & in)
 {
 	if(!first_condition(c))
-		throw "Malformed";
+		throw MALFORMED;
 
 	char ull[4] = "\0\0\0";
 	in.get(ull, 4);
 
 	if(0 != strcmp("ull", ull))
-		throw "Malformed";
+		throw MALFORMED;
 
 	skip_dirt(c, in);
 
