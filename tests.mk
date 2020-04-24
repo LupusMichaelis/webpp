@@ -36,13 +36,18 @@ $(TESTDIR)/test_query.so: src/query.o src/query_var.o src/query_clause.o src/que
 $(TESTDIR)/test_query: $(TESTDIR)/test_query.so
 	$(UNITTESTER) $^
 
+# Configuration #########################################################
+$(TESTDIR)/test_configuration.so: src/configuration.o $(TESTDIR)/test_configuration.o
+$(TESTDIR)/test_configuration: $(TESTDIR)/test_configuration.so
+	$(UNITTESTER) $^
+
 # HTTP input response ###################################################
 $(TESTDIR)/test_http_response.so: src/http_response.o $(TESTDIR)/test_http_response.o
 $(TESTDIR)/test_http_response: $(TESTDIR)/test_http_response.so
 	$(UNITTESTER) $^
 
 # HTTP input request ###################################################
-$(TESTDIR)/test_http_request.so: src/http_request.o $(TESTDIR)/test_http_request.o
+$(TESTDIR)/test_http_request.so: src/configuration.o src/http_request.o $(TESTDIR)/test_http_request.o
 $(TESTDIR)/test_http_request: $(TESTDIR)/test_http_request.so
 	$(UNITTESTER) $^
 

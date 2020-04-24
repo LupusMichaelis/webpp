@@ -7,7 +7,7 @@ static std::map<std::string, std::string> const make_environment();
 extern char const ** environ;
 
 namespace webpp {
-configuration::configuration(int argc, char * argv[])
+configuration::configuration(int argc, char const * argv[])
 	: m_args {argv, argv + argc}
 	, m_environment {make_environment()}
 {
