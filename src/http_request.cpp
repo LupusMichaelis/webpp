@@ -9,18 +9,20 @@
 
 namespace webpp { namespace http {
 
-bool from_cgi(configuration const & c, std::unique_ptr<request> & p_r)
+bool from_cgi(configuration const & c, std::unique_ptr<request> & p_r_out)
 {
 	auto const & env = c.get_environment();
 
-	p_r = std::make_unique<request>();
+	auto p_r = std::make_unique<request>();
 	try
 	{
 		p_r->method(env.at("REQUEST_METHOD"));
 		p_r->uri(env.at("REQUEST_URI"));
 		p_r->content_type(env.at("CONTENT_TYPE"));
+
+		std::swap(p_r, p_r_out);
 	}
-	catch(std::out_of_range const )
+	catch(std::out_of_range const & )
 	{
 		return false;
 	}
