@@ -3,5 +3,5 @@
 	user: "",
 	password: "",
 	space: "xxx",
-	port: 3308);
+	port: 3306
 }
