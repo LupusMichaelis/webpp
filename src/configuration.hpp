@@ -11,13 +11,14 @@ namespace webpp
 class configuration
 {
 	public:
+		configuration(int argc, char * argv[]);
 		configuration(int argc, char const * argv[]);
 
 		std::map<std::string, std::string> const & get_environment() const
 		{ return m_environment; }
 
-        std::vector<std::string> const & get_args() const
-        { return m_args; }
+		std::vector<std::string> const & get_args() const
+		{ return m_args; }
 
 	private:
 		std::vector<std::string> m_args;

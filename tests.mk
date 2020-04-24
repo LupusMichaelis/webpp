@@ -10,6 +10,7 @@ CXXFLAGS += \
 		-I$(HOME)/.local/include/ \
 
 TESTS= \
+	   $(TESTDIR)/test_configuration \
 	   $(TESTDIR)/test_query_var \
 	   $(TESTDIR)/test_query \
 	   $(TESTDIR)/test_model \

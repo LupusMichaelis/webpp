@@ -3,16 +3,23 @@
 
 #include <algorithm>
 
-static std::map<std::string, std::string> const make_environment();
 extern char const ** environ;
 
 namespace webpp {
+
+static std::map<std::string, std::string> const make_environment();
+
 configuration::configuration(int argc, char const * argv[])
 	: m_args {argv, argv + argc}
 	, m_environment {make_environment()}
 {
 }
-} // namespace webpp
+
+configuration::configuration(int argc, char * argv[])
+	: m_args {argv, argv + argc}
+	, m_environment {make_environment()}
+{
+}
 
 static std::map<std::string, std::string> const make_environment()
 {
@@ -37,3 +44,4 @@ static std::map<std::string, std::string> const make_environment()
 	return environment;
 }
 
+} // namespace webpp
