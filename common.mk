@@ -6,7 +6,7 @@ CXXFLAGS= \
 		-Wall \
 		-Werror \
 		-std=c++11 \
-		`mysql_config --cflags` \
+		`mariadb_config --cflags` \
 		-g -ggdb \
 
 LDFLAGS= \
@@ -14,7 +14,7 @@ LDFLAGS= \
 		-lboost_system \
 		-lboost_filesystem \
 		-lboost_regex \
-		`mysql_config --libs` \
+		`mariadb_config --libs` \
 		-g -ggdb \
 
 TESTDIR=tests
